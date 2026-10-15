@@ -7,7 +7,7 @@ It helps you manage letter pair words, review 3-style algorithms, and train reca
 
 ## Demo
 
-- Live site: [3BLD(3 style & letter pairs) practice](https://charlesouo.github.io/Blindfolded-Letter-Pairs/)
+- Live site: [3BLD(3 style & letter pairs) practice](https://charlesouo.github.io/Blindfolded_Cube_Trianer/)
 
 ## Overview
 
@@ -157,7 +157,7 @@ This project is licensed under `GPL-3.0-or-later`.
 
 - Author: Charles Lin
 - WCA ID: [2020LINC05](https://www.worldcubeassociation.org/persons/2020LINC05)
-- GitHub: [Blindfolded-Letter-Pairs](https://github.com/CharlesOuO/Blindfolded-Letter-Pairs)
+- GitHub: [Blindfolded_Cube_Trianer](https://github.com/CharlesOuO/Blindfolded_Cube_Trianer)
 - Instagram: [@chihjialin](https://www.instagram.com/chihjialin/)
 - Email: [linchihjia@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com)
 
@@ -172,7 +172,7 @@ This project is licensed under `GPL-3.0-or-later`.
 
 ## Demo
 
-- 網站連結：[3BLD(3 style & letter pairs) practice](https://charlesouo.github.io/Blindfolded-Letter-Pairs/)
+- 網站連結：[3BLD(3 style & letter pairs) practice](https://charlesouo.github.io/Blindfolded_Cube_Trianer/)
 
 ## 專案簡介
 
@@ -319,6 +319,6 @@ This project is licensed under `GPL-3.0-or-later`.
 
 - Author: Charles Lin
 - WCA ID: [2020LINC05](https://www.worldcubeassociation.org/persons/2020LINC05)
-- GitHub: [Blindfolded-Letter-Pairs](https://github.com/CharlesOuO/Blindfolded-Letter-Pairs)
+- GitHub: [Blindfolded_Cube_Trianer](https://github.com/CharlesOuO/Blindfolded_Cube_Trianer)
 - Instagram: [@chihjialin](https://www.instagram.com/chihjialin/)
 - Email: [linchihjia@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com)

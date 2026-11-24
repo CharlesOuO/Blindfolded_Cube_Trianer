@@ -78,6 +78,13 @@ function remapLetteringData(type, oldLabels, newLabels) {
 }
 
 function applyLetteringScheme(scheme) {
+    return withTrainerRecordsLock(() => {
+        trainerRecords = getTrainerRecords();
+        saveLetteringScheme(scheme);
+    });
+}
+
+function saveLetteringScheme(scheme) {
     const state = ensureLetteringState();
     for (const type of ['corner', 'edge']) {
         const next = scheme === 'custom' ? [...state.custom[type]] : [...(scheme === 'en' ? CHARS_EN : CHARS_ZH)];

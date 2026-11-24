@@ -1,316 +1,161 @@
-# 3BLD(3 style & letter pairs) practice
+# 3BLD Practice
 
-A bilingual browser-based practice tool for 3BLD.
-It helps you manage letter pair words, review 3-style algorithms, and practice with flashcards and a timed trainer.
+Use this browser app to save words for your 3×3 blindfolded letter pairs, look up 3-style algorithms, and practice with flashcards or a timer.
 
-[Traditional Chinese / 繁體中文](#繁體中文)
+[Open 3BLD Practice](https://charlesouo.github.io/Blindfolded_Cube_Trianer/) · [繁體中文](#繁體中文)
 
-## Demo
+You can install the site from your browser as a PWA and use it offline. The native Android project and APK are no longer maintained.
 
-- Live site: [3BLD(3 style & letter pairs) practice](https://charlesouo.github.io/Blindfolded_Cube_Trianer/)
+## Letter Pairs
 
-## Overview
+In `Letter Pairs`, choose `Corners` or `Edges`, then switch between `Words` and `Algorithm`. Each piece type has its own word and algorithm entries. In `List`, pick a start code to see that group, search by pair or content, and filter by whether an entry is filled.
 
-This project is designed for 3BLD practice in the browser.
-You can use it to:
+In `Algorithm → List`, click a pair to open the matching 3-style case on [BLDDB v2](https://v2.blddb.net/) in a new tab. The link uses your selected buffer and lettering scheme. With Speffz lettering and a `UFR` corner buffer, for example, `AB` opens `UFR → UBL → UBR`.
 
-- store `Words` for letter pairs
-- review `Corners` algorithms
-- review `Edges` algorithms
-- train with `3-Style Trainer` (scramble + timer + history)
-- practice with flashcards
-- switch lettering codes between `Zhuyin`, `English`, and `Custom`
-- export and import your own local data
+In `Table`, choose `Good`, `Slow`, `Hard`, or `Hide`, then click the cells you want to mark. Press `Done` or `Esc` to return to editing.
 
-It is a fully static website with no backend required.
+- `Hide buffer pairs` skips pairs that include any sticker on the selected buffer piece.
+- `Hide Twist` for corners and `Hide Flip` for edges skip pairs made up of two different stickers on the same piece.
 
-The app is distributed as a website/PWA. Install it through your browser for standalone and offline use; no native Android project or APK is maintained. Keep a separate JSON backup of your words and progress.
+Skipped pairs appear gray and stay out of `Flashcards` and the `Trainer`. Turn off the filter to see their previous familiarity marks.
 
-## Default Setup
+## Built-in algorithms
 
-- Interface language: `English` on first launch
-- Default lettering: `Zhuyin` in Speffz sticker order
-- Built-in algorithm source: [BLDDB](https://blddb.net/)
-- Built-in algorithm format: `commutator-first`
-- Default corner and edge buffers: Speffz `C`
-- Corner and edge buffer stickers can be selected separately in Settings; placeholders update automatically
-- Built-in corner and edge references are stored locally in this project
-
-## Notation
+Empty algorithm fields can show a built-in formula from [`BLDDB`](https://blddb.net/). The app loads these references from `built-in-algorithms.js`, so the placeholders also work offline. The built-in notation is `commutator-first`.
 
 - Conjugate (setup): `[A: B] = A B A'`
 - Commutator: `[A, B] = A B A' B'`
 - Combination: `[A: [B, C]] = A B C B' C' A'`
 - Example: `[R2': [E, R U' R']] = R2' E R U' R' E' R U R`
 
-## Main Features
+## Flashcards
 
-### 1. Letter Pairs
+Practice `Words`, `Corners`, or `Edges`. The app uses spaced review and shows the cards that are due. If none are due, it draws from the cards due next.
 
-- switch between `List` and `Table` layouts
-- switch between `Words` and `Algorithm`
-- keep separate word and algorithm entries for `Corners` and `Edges`
-- in `List`, browse by start code, search that group, and filter filled or unfilled entries
-- in `Table`, choose `Good`, `Slow`, `Hard`, or `Hide` first, then click the cells to mark. Press `Done` or `Esc` to return to editing.
-- use `Hide buffer pairs` to skip pairs involving any sticker on the selected buffer piece
-- use `Hide Twist` (corners) or `Hide Flip` (edges) to skip pairs that use two different stickers on the same piece
+| Grade | Next review |
+| --- | --- |
+| `Hard` | In 10 minutes |
+| `Slow` | In 6 hours |
+| `Good` | On a day-based schedule |
 
-Skipped pairs appear gray in the table and are excluded from Flashcards and the Trainer. Turning off a skip filter restores the underlying familiarity marks.
+## 3-Style Trainer
 
-### 2. 3-Style Trainer
+The `3-Style Trainer` generates a scramble from the built-in algorithm data when you open it. Switch between `Corners` and `Edges` to see separate histories. You can apply `+2` or `DNF` and check your `ao5`, `ao12`, `ao50`, and `ao100`. On touch devices, swipe left or right to switch tabs.
 
-- generate corner/edge scrambles with built-in algorithm data
-- auto-generate a scramble when entering the trainer page
-- switch between `Corners` and `Edges` sessions
-- keep per-type history, penalties (`+2`, `DNF`), and averages (`ao5`, `ao12`, `ao50`, `ao100`)
-- supports swipe tab switching on touch devices (left/right)
+## Settings
 
-### 3. Built-in Algorithm References
+The app opens in `English` on the first visit. You can switch to `Traditional Chinese` in `Settings`, and the app remembers your choice. Lettering starts in `Zhuyin` using Speffz sticker order. You can switch between `Zhuyin ㄅ~ㄩ`, `English a~x`, and `Custom`. Your saved custom lettering is kept when you switch presets.
 
-- built-in defaults are derived from `BLDDB`
-- no runtime fetch is required
-- empty algorithm fields can show built-in placeholders
-- corner and edge algorithms can be reviewed separately in flashcards
+The corner and edge buffers both start at Speffz `C`. You can pick a different sticker for each buffer. The built-in algorithm placeholders update to match.
 
-### 4. Flashcards
+Open `Settings → Edit custom lettering` and choose the colors for `Up face` and `Face toward you`. The cube net rotates to show those faces as `U` and `F`. Edit the sticker codes and select `Apply Custom` to save them. You can also edit the table headers in `Edit Mode`. Saved words and algorithms stay attached to their original sticker positions. For example, swapping A and D moves the entry from AB to DB.
 
-- practice `Words`, `Corners`, and `Edges`
-- review due cards with spaced-repetition style scheduling
-- grade cards as `Hard`, `Slow`, or `Good`
-- if no card is due, the app falls back to the earliest upcoming cards
+## Back up your data
 
-Review timing:
+Your words and progress are stored in the browser's `localStorage`. Export a `.json` backup to keep a copy of your words, formulas, review progress, timer history, lettering, language, and buffer settings. You can also export the word table as `.csv`.
 
-- `Hard`: due again in 10 minutes
-- `Slow`: due again in 6 hours
-- `Good`: scheduled with day-based spacing
-
-### 5. Settings, Language, and Lettering Codes
-
-- switch between `English` and `Traditional Chinese` in `Settings`; the app remembers your choice
-- lettering code presets: `Zhuyin ㄅ~ㄩ`, `English a~x`, and `Custom`
-- switching presets does not erase your saved custom scheme
-- open `Settings → Edit custom lettering` and choose the colors for `Up face` and `Face toward you`. The cube net rotates and labels those faces `U` and `F`. Edit the stickers and select `Apply Custom` to save the codes.
-- use `Edit Mode` in the table to edit lettering directly from its headers. When a code changes, saved words and algorithms follow their original physical sticker positions. For example, swapping A and D changes the pair AB at that position to DB.
-
-### 6. Backup and Restore
-
-- export a full `.json` backup
-- export the word table as `.csv`
-- import previous backups
-
-Backup data includes:
-
-- word data
-- corner algorithms
-- edge algorithms
-- familiarity and review state
-- custom lettering scheme
-- saved language setting
-
-## How To Use
-
-1. Open `Letter Pairs`
-2. Fill in your `Words`
-3. Switch to `Algorithm` and enter `Corners` or `Edges`
-4. Set your buffers and lettering in `Settings`
-5. Mark familiarity or skip pairs in `Table`
-6. Use `Flashcards` for recall or `Trainer` for timed practice
-7. Export a `.json` backup regularly
-
-## Data Storage
-
-- all user data is stored in browser `localStorage`
-- clearing browser site data will remove local progress if you do not have a backup
-- built-in algorithm defaults are loaded from `built-in-algorithms.js`
-- selected corner and edge buffers are included in JSON backups
+The app asks for confirmation before restoring a backup over your current data. When you restore an older backup, any data categories it leaves out are cleared. Clearing your browser's site data also deletes local practice data.
 
 ## Troubleshooting
 
-- If you pushed updates but still see an old UI, hard refresh: `Ctrl+F5` (Windows) or `Cmd+Shift+R` (macOS).
-- GitHub Pages static assets are cached for a short time (`Cache-Control: max-age=600`), so old/new CSS/JS can briefly mix.
-- If needed, open the site in private mode or clear site data for `charlesouo.github.io`.
+If the site still shows an old version after a push, try `Ctrl+F5` on Windows or `Cmd+Shift+R` on macOS. GitHub Pages can briefly serve CSS and JavaScript from different versions because it caches static files (`Cache-Control: max-age=600`). You can also open the site in a private window to check whether the regular window is using an older copy.
 
 ## Deployment
 
-This project can be deployed as a static site on:
-
-- GitHub Pages
-- Netlify
-- Cloudflare Pages
-
-No server or database is required.
+You can host the static site on GitHub Pages, Netlify, or Cloudflare Pages. It runs without a backend or database.
 
 ## License
 
-This project is licensed under `GPL-3.0-or-later`.
+This project uses `GPL-3.0-or-later`. See [LICENSE](./LICENSE) for the full text.
 
-- Full license text: [LICENSE](./LICENSE)
-- Built-in algorithm data in this project is derived from [BLDDB](https://blddb.net/)
-- BLDDB documents its license as `GPL version 3 or later`
+The built-in algorithms come from [BLDDB v2](https://github.com/nbwzx/blddb/tree/v2). The upstream copyright notice credits Zixing Wang, and [BLDDB's documentation](https://docs.blddb.net/en/) specifies GPL version 3 or later.
+
+The repo includes the [corner](./cornerManmade.json) and [edge](./edgeManmade.json) datasets. The [generator](./scripts/generate-built-in-algorithms.js) takes the highest-ranked available commutator for each case and writes it to `built-in-algorithms.js`.
 
 ## Author
 
-- Author: Charles Lin
-- WCA ID: [2020LINC05](https://www.worldcubeassociation.org/persons/2020LINC05)
-- GitHub: [Blindfolded_Cube_Trianer](https://github.com/CharlesOuO/Blindfolded_Cube_Trianer)
-- Instagram: [@chihjialin](https://www.instagram.com/chihjialin/)
-- Email: [linchihjia@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com)
+Charles Lin · WCA [2020LINC05](https://www.worldcubeassociation.org/persons/2020LINC05)
+
+[GitHub](https://github.com/CharlesOuO/Blindfolded_Cube_Trianer) · [Instagram @chihjialin](https://www.instagram.com/chihjialin/) · [linchihjia@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com)
 
 ---
 
 # 繁體中文
 
-## 3BLD(3 style & letter pairs) practice
+用這個網站練 3BLD，可以記下每組字母對想到的字詞、查 3-style 公式、用翻牌複習，也可以計時練還原。
 
-這是一個在瀏覽器中使用的 3BLD 練習工具。
-你可以用它管理 letter pairs 字詞、複習 3-style 公式，並透過字卡和計時訓練練習回想與還原速度。
+[開啟 3BLD 練習網站](https://charlesouo.github.io/Blindfolded_Cube_Trianer/)
 
-## Demo
+網站可以透過瀏覽器安裝成 PWA，也能離線使用。原生 Android 專案和 APK 已停止維護。
 
-- 網站連結：[3BLD(3 style & letter pairs) practice](https://charlesouo.github.io/Blindfolded_Cube_Trianer/)
+## 字母配對
 
-## 專案簡介
+先選角塊或邊塊，再切到 `Words` 記字詞，或用 `Algorithm` 存公式。角塊和邊塊的字詞及公式各自儲存。在 `List` 選開頭代碼就能換組，也能搜尋組內的字母對或內容，或只看已填、未填的配對。
 
-這個專案主要用來做 3BLD 練習，你可以用它來：
+在 `Algorithm → List` 點字母對，會依照你選的 buffer 和編碼，在新分頁開啟 [BLDDB v2](https://v2.blddb.net/) 的對應案例。像是用 Speffz 編碼和 `UFR` 角塊 buffer 時，點 `AB` 就會查 `UFR → UBL → UBR`。
 
-- 紀錄 letter pairs 的 `Words`
-- 複習 `Corners` 公式
-- 複習 `Edges` 公式
-- 使用 `3-Style Trainer` 練習（打亂、計時、紀錄）
-- 使用字卡練習
-- 可在 `注音`、`英文`、`自訂` 代碼方案間切換
-- 匯出與匯入自己的本機資料
+在 `Table`，先選 `Good`、`Slow`、`Hard` 或 `Hide`，再點要標記的格子。按「完成」或 `Esc` 就能回到編輯。
 
-這是一個純靜態網站，不需要後端。
+- `Hide buffer pairs` 會略過涉及 buffer 那顆實體塊任一貼紙的配對。
+- 角塊的 `Hide Twist` 和邊塊的 `Hide Flip` 會略過同一顆實體塊上兩張不同貼紙組成的配對。
 
-目前以網頁／PWA 形式提供，可透過瀏覽器安裝並離線使用，不再維護原生 Android 專案或 APK。字詞與進度請另外匯出 JSON 備份。
+略過的配對會在表格中變灰，翻牌和計時訓練都不會抽到。關閉篩選就會顯示原本的熟悉度標記。
 
-## 預設設定
+## 內建公式
 
-- 首次開啟時的介面語言：`英文`
-- 預設編碼：依 Speffz 貼紙順序排列的`注音`
-- 內建公式來源：[BLDDB](https://blddb.net/)
-- 內建公式顯示格式：`commutator-first`
-- 角塊與邊塊預設 Buffer 都對應 Speffz 的 `C`，可在設定分別修改
-- 內建的 corners 和 edges 公式參考已直接存放在專案內
-
-## Notation
+公式欄留白時，會顯示取自 [BLDDB](https://blddb.net/) 的內建公式供你參考。資料直接從 `built-in-algorithms.js` 載入，離線也看得到。預設以 `commutator-first` 顯示。
 
 - Conjugate（setup）：`[A: B] = A B A'`
 - Commutator：`[A, B] = A B A' B'`
 - Combination：`[A: [B, C]] = A B C B' C' A'`
-- Example：`[R2': [E, R U' R']] = R2' E R U' R' E' R U R`
+- 例子：`[R2': [E, R U' R']] = R2' E R U' R' E' R U R`
 
-## 主要功能
+## 記憶翻牌
 
-### 1. 字母配對（Letter Pairs）
+可以用字卡複習 `Words`、`Corners` 或 `Edges`。字卡會按評分安排下次複習。有到期的卡就先抽，沒有的話，就抽接下來最早到期的卡。
 
-- 可切換 `List` 與 `Table` 版面
-- 可切換 `Words` 與 `Algorithm`
-- 角塊與邊塊各自儲存字詞和公式
-- `List` 可依開頭代碼換組，搜尋組內配對或內容，也可篩選已填寫、未填寫的配對
-- `Table` 先選 `Good`、`Slow`、`Hard` 或 `Hide`，再點格子標記。按「完成」或 `Esc` 回到編輯。
-- `Hide buffer pairs` 會略過涉及 Buffer 那顆實體塊任一貼紙的配對
-- `Hide Twist`（角塊）和 `Hide Flip`（邊塊）會略過同一顆實體塊的兩個不同貼紙所組成的配對
+| 評分 | 下次複習 |
+| --- | --- |
+| `Hard` | 10 分鐘後 |
+| `Slow` | 6 小時後 |
+| `Good` | 按天數安排 |
 
-略過的配對在表格中會變灰，翻牌與計時訓練不會抽到。關閉篩選後會恢復原本的熟悉度標記。
+## 計時訓練
 
-### 2. 3-Style Trainer
+打開計時訓練時，網站會用內建公式產生一組打亂。切換 `Corners` 和 `Edges` 可以分開看兩種練習的成績。每筆紀錄可以加 `+2` 或判 `DNF`，也能看 `ao5`、`ao12`、`ao50` 和 `ao100`。在觸控裝置上可以左右滑動切換頁籤。
 
-- 可依內建公式資料產生 corners/edges 打亂
-- 切到 Trainer 頁面會自動產生一組打亂
-- 可切換 `Corners` / `Edges` 練習類型
-- 支援每種類型的歷史紀錄、`+2`、`DNF` 與平均（`ao5`、`ao12`、`ao50`、`ao100`）
-- 行動裝置可左右滑動切換頁籤
+## 設定
 
-### 3. 內建公式參考
+第一次開啟時，介面是`英文`。在 `Settings` 可以切換`繁中`或 `English`，網站會記住你的選擇。預設編碼是按 Speffz 貼紙順序排列的`注音`。你可以在`注音 ㄅ~ㄩ`、`English a~x` 和`自訂`之間切換，原本儲存的自訂編碼會保留。
 
-- 內建預設公式根據 `BLDDB` 資料整理
-- 不需要在執行時另外抓取資料
-- 當公式欄位為空時，可以顯示內建 placeholder
-- corners 與 edges 可以分開在字卡中複習
+角塊和邊塊的預設 buffer 都對應 Speffz 的 `C`。兩個 buffer 可以分開設定，內建公式也會跟著更新。
 
-### 4. Flashcards
+到「設定 → 編輯自訂編碼」，選擇哪個顏色朝上、哪個顏色朝自己。展開圖會跟著旋轉，並把這兩面標成 `U` 和 `F`。填好貼紙代碼後，按「套用自訂」儲存。你也可以在 `Table` 開啟 `Edit Mode`，直接編輯表頭。字詞和公式跟著實體貼紙位置走，像是對調 A 和 D，原本 AB 格子的內容就會移到 DB。
 
-- 可練習 `Words`、`Corners`、`Edges`
-- 使用類 spaced repetition 的到期排程
-- 可將卡片評分為 `Hard`、`Slow`、`Good`
-- 如果目前沒有到期卡片，系統會改抽最近即將到期的卡
+## 備份與還原
 
-複習時間規則：
+字詞和練習進度存在瀏覽器的 `localStorage`。匯出 `.json` 可以備份字詞、公式、熟悉度、複習進度、計時紀錄、編碼、語言和 buffer 設定。也可以把 `Words` 表格另外匯出成 `.csv`。
 
-- `Hard`：10 分鐘後再次到期
-- `Slow`：6 小時後再次到期
-- `Good`：依天數間隔排程
-
-### 5. 設定、語言與代碼方案
-
-- 可在 `Settings` 切換 `繁中` 或 `English`，App 會記住你的選擇
-- 代碼方案可在 `注音 ㄅ~ㄩ`、`English a~x`、`自訂` 間切換
-- 切換預設不會清掉已儲存的自訂方案
-- 到「設定 → 編輯自訂編碼」選擇朝上和朝自己的面。展開圖會跟著旋轉，將這兩面標為 `U` 和 `F`。填好貼紙代碼後，按「套用自訂」儲存。
-- 表格也可透過 `Edit Mode` 編輯表頭。字詞和公式跟著原本的實體貼紙位置，所以對調 A 和 D 後，原本 AB 格子的內容會對應到 DB。
-
-### 6. 備份與還原
-
-- 可匯出完整 `.json` 備份
-- 可匯出 `Words` 表格為 `.csv`
-- 可匯入舊備份
-
-備份內容包含：
-
-- 字詞資料
-- corner 公式
-- edge 公式
-- 熟悉度與複習進度
-- 自訂 lettering scheme
-- 已儲存的語言設定
-
-## 使用方式
-
-1. 開啟「字母配對」
-2. 輸入你的 `Words`
-3. 切到 `Algorithm` 輸入 `Corners` 或 `Edges`
-4. 到「設定」選擇 Buffer 和編碼
-5. 在 `Table` 標記熟悉度，或設定要略過的配對
-6. 到「記憶翻牌」複習，或到「計時訓練」練習還原
-7. 定期匯出 `.json` 備份
-
-## 資料儲存
-
-- 所有使用者資料都存放在瀏覽器 `localStorage`
-- 如果沒有先備份，清除瀏覽器站點資料後，本機進度會消失
-- 內建公式預設由 `built-in-algorithms.js` 提供
+還原備份會先詢問你是否要覆蓋目前的資料。若還原的是舊版備份，備份裡缺少的資料類別會清空。清除瀏覽器的站點資料也會刪掉本機練習紀錄。
 
 ## 疑難排解
 
-- 如果已經 push 但畫面還是舊版，請先強制重新整理：`Ctrl+F5`（Windows）或 `Cmd+Shift+R`（macOS）。
-- GitHub Pages 靜態資源有短暫快取（`Cache-Control: max-age=600`），短時間內可能出現新舊 CSS/JS 混用。
-- 必要時可用無痕模式開啟，或清除 `charlesouo.github.io` 站點資料。
+如果 push 後還是看到舊版，先按 `Ctrl+F5`（Windows）或 `Cmd+Shift+R`（macOS）強制重新整理。GitHub Pages 會短暫快取靜態檔案（`Cache-Control: max-age=600`），有時會一併載入不同版本的 CSS 和 JavaScript。也可以用無痕視窗確認是不是一般視窗還在用舊快取。
 
-## 部署方式
+## 部署
 
-這個專案可以直接部署成靜態網站，例如：
-
-- GitHub Pages
-- Netlify
-- Cloudflare Pages
-
-不需要伺服器或資料庫。
+這是純靜態網站，可以部署到 GitHub Pages、Netlify 或 Cloudflare Pages，無需後端或資料庫。
 
 ## 授權
 
-本專案採用 `GPL-3.0-or-later` 授權。
+本專案採用 `GPL-3.0-or-later`。完整條文見 [LICENSE](./LICENSE)。
 
-- 完整授權條文請見 [LICENSE](./LICENSE)
-- 專案中的內建公式資料是根據 [BLDDB](https://blddb.net/) 整理而成
-- BLDDB 官方文件標示其授權為 `GPL version 3 or later`
+內建公式來自 [BLDDB v2](https://github.com/nbwzx/blddb/tree/v2)。原專案的著作權聲明署名 Zixing Wang。[BLDDB 官方文件](https://docs.blddb.net/en/) 標示其採用 GPL 第 3 版或後續版本授權。
 
-## 作者資訊
+專案附有[角塊資料](./cornerManmade.json)和[邊塊資料](./edgeManmade.json)。[產生腳本](./scripts/generate-built-in-algorithms.js)會從每個案例取出排名最高且可用的交換子，寫入 `built-in-algorithms.js`。
 
-- Author: Charles Lin
-- WCA ID: [2020LINC05](https://www.worldcubeassociation.org/persons/2020LINC05)
-- GitHub: [Blindfolded_Cube_Trianer](https://github.com/CharlesOuO/Blindfolded_Cube_Trianer)
-- Instagram: [@chihjialin](https://www.instagram.com/chihjialin/)
-- Email: [linchihjia@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com)
+## 作者
+
+Charles Lin · WCA [2020LINC05](https://www.worldcubeassociation.org/persons/2020LINC05)
+
+[GitHub](https://github.com/CharlesOuO/Blindfolded_Cube_Trianer) · [Instagram @chihjialin](https://www.instagram.com/chihjialin/) · [linchihjia@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com)

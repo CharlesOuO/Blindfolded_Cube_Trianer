@@ -3661,6 +3661,14 @@ body { padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom)); }
     overflow-wrap: anywhere;
 }
 #view-list .pair-item:focus-within .pair-label { color: var(--primary-strong); background: var(--primary-soft); }
+#view-list a.pair-label {
+    color: var(--primary-strong);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    min-height: 44px;
+}
+#view-list a.pair-label:hover,
+#view-list a.pair-label:focus-visible { background: var(--primary-soft); }
 #view-list .pair-input {
     width: 100%;
     min-width: 0;

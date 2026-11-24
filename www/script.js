@@ -269,6 +269,8 @@ Object.assign(translations['zh-TW'], {
     ph_formula: "\u8f38\u5165\u516c\u5f0f",
     ph_algorithm: "\u8f38\u5165\u516c\u5f0f",
     hint_formula_edit: "\u53ef\u5728\u9019\u88e1\u70ba\u6bcf\u7d44\u5b57\u6bcd\u5c0d\u8f38\u5165\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\uff0c\u7a7a\u767d\u6642\u6703\u986f\u793a\u5167\u5efa BLDDB \u9810\u8a2d\u4ea4\u63db\u5b50\uff0c\u7ffb\u724c\u6a21\u5f0f\u4e5f\u53ef\u4ee5\u5206\u958b\u7df4\u7fd2",
+    blddb_pair_lookup: "\u5728 BLDDB \u67e5\u8a62 {pair}\uff08\u65b0\u5206\u9801\uff09",
+    confirm_restore_backup: "\u9084\u539f\u5099\u4efd\u6703\u53d6\u4ee3\u76ee\u524d\u7684\u5b57\u8a5e\u3001\u516c\u5f0f\u3001\u8907\u7fd2\u9032\u5ea6\u548c\u8a08\u6642\u7d00\u9304\u3002\u820a\u7248\u5099\u4efd\u672a\u5305\u542b\u7684\u8cc7\u6599\u985e\u5225\u6703\u6e05\u7a7a\u3002\u78ba\u5b9a\u9084\u539f\uff1f",
     alert_no_formula_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u516c\u5f0f\u8cc7\u6599\uff01",
     alert_no_algorithm_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\u8cc7\u6599\uff01",
     confirm_switch_chars_en: "\u8981\u4e00\u8d77\u5207\u63db\u6210\u82f1\u6587 a-x \u4ee3\u78bc\u55ce\uff1f",
@@ -384,6 +386,8 @@ Object.assign(translations.en, {
     ph_formula: "Enter formula",
     ph_algorithm: "Enter algorithm",
     hint_formula_edit: "Edit corner or edge algorithms for the selected start code. Empty fields show built-in BLDDB commutators, and Flashcards can study them separately too.",
+    blddb_pair_lookup: "Look up {pair} on BLDDB (new tab)",
+    confirm_restore_backup: "Restore this backup and replace your words, algorithms, review progress, and timer history? Data categories missing from older backups will be cleared.",
     alert_no_formula_data: "No formula data in this range!",
     alert_no_algorithm_data: "No corner or edge algorithm data in this range!",
     confirm_switch_chars_en: "Also switch to English a-x codes?",
@@ -493,22 +497,22 @@ function calculateNextReview(currentData, grade) {
 function getStatusMap(contentMode = 'word') {
     return readStoredJson(getStatusStorageKey(contentMode), {});
 }
-function shouldDefaultHidePair(pair, contentMode = 'word') {
+function shouldDefaultHidePair(pair, contentMode, dict) {
     if (!isAlgorithmContentMode(contentMode)) return false;
 
-    const storedValue = (getContentDict(contentMode)[pair] || '').trim();
+    const storedValue = ((dict ?? getContentDict(contentMode))[pair] || '').trim();
     if (storedValue) return false;
 
     return !getBuiltInAlgorithm(pair, contentMode);
 }
-function getPairData(pair, contentMode = 'word') {
-    const map = getStatusMap(contentMode);
+function getPairData(pair, contentMode = 'word', { statusMap, dict } = {}) {
+    const map = statusMap ?? getStatusMap(contentMode);
     let data = map[pair];
     if (typeof data === 'string') {
         return { interval: (data === 'green' ? 10 : 3), repetition: 1, ef: 2.5, dueDate: Date.now(), color: data };
     }
     if (data) return data;
-    if (shouldDefaultHidePair(pair, contentMode)) {
+    if (shouldDefaultHidePair(pair, contentMode, dict)) {
         return { interval: -1, repetition: 0, ef: 2.5, dueDate: 0, color: 'gray' };
     }
     return null;
@@ -518,15 +522,15 @@ function saveStatusData(pair, dataObject, contentMode = 'word') {
     map[pair] = dataObject;
     localStorage.setItem(getStatusStorageKey(contentMode), JSON.stringify(map));
 }
-function getPairColor(pair, contentMode = 'word') {
-    if (isBufferPairHidden(pair, contentMode) || isOrientationPairHidden(pair, contentMode)) return 'gray';
-    const data = getPairData(pair, contentMode);
+function getPairColor(pair, contentMode = 'word', snapshot = {}) {
+    if (isBufferPairHidden(pair, contentMode, snapshot.bufferLabels) ||
+        isOrientationPairHidden(pair, contentMode, snapshot.hideOrientation)) return 'gray';
+    const data = getPairData(pair, contentMode, snapshot);
     return data ? (data.color || 'red') : '';
 }
 
 function t(key, params = {}) { let str = translations[currentLang][key] || key; Object.keys(params).forEach(k => { str = str.replace(`{${k}}`, params[k]); }); return str; }
 function getDict() { return readStoredJson(STORAGE_KEY, {}); }
-function saveDict(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
 function getFormulaDict(formulaType = 'corner') { return readStoredJson(getContentStorageKey(formulaType), {}); }
 function saveFormulaDict(formulaType = 'corner', dict) { localStorage.setItem(getContentStorageKey(formulaType), JSON.stringify(dict)); }
 function getContentDict(contentMode = 'word') { return isAlgorithmContentMode(contentMode) ? getFormulaDict(contentMode) : readStoredJson(getContentStorageKey(contentMode), {}); }
@@ -606,7 +610,7 @@ function sanitizeTrainerRecords(value) {
         if (!Number.isFinite(rawTimeMs) || rawTimeMs < 0) return null;
 
         return {
-            id: typeof record.id === 'string' && record.id ? record.id : `trainer-${Date.now()}-${index}`,
+            id: typeof record.id === 'string' && record.id ? record.id : `trainer-legacy-${index}`,
             rawTimeMs,
             penalty: allowedPenalties.has(record.penalty) ? record.penalty : 'ok',
             scramble: typeof record.scramble === 'string' ? record.scramble : '',
@@ -651,8 +655,7 @@ function normalizeBackupPayload(value) {
     const rawLang = settingsSection.lang ?? value.lang;
     const rawAlgorithmBuffers = settingsSection.algorithmBuffers ?? value.algorithmBuffers;
 
-    const knownKeys = [
-        settingsSection.lettering,
+    const dataMaps = [
         letterPairsSection.edgeWord ?? value.edgeWordDict,
         statusSection.edgeWord ?? value.edgeWordStatus,
         rawDict,
@@ -660,17 +663,17 @@ function normalizeBackupPayload(value) {
         rawEdgeFormulaDict,
         rawStatus,
         rawCornerFormulaStatus,
-        rawEdgeFormulaStatus,
-        rawTrainerRecords,
-        rawChars,
-        rawLang,
-        rawAlgorithmBuffers
+        rawEdgeFormulaStatus
     ];
-    const hasKnownKey = knownKeys.some((sectionValue) => sectionValue != null);
-    if (!hasKnownKey) throw new Error('Unknown backup format');
+    const isValidBackup = value.version === 3
+        ? dataMaps.every(isPlainObject) && Array.isArray(rawTrainerRecords)
+        : (dataMaps.some(isPlainObject) || Array.isArray(rawTrainerRecords)) &&
+            dataMaps.every(map => map == null || isPlainObject(map)) &&
+            (rawTrainerRecords == null || Array.isArray(rawTrainerRecords));
+    if (!isValidBackup) throw new Error('Invalid or incomplete backup');
 
     if (settingsSection.lettering != null && !sanitizeLetteringState(settingsSection.lettering)) throw new Error('Invalid lettering');
-    const normalizedChars = rawChars == null ? null : sanitizeChars(rawChars);
+    const normalizedChars = rawChars == null ? null : validateLetteringScheme(rawChars);
     if (rawChars != null && !normalizedChars) throw new Error('Invalid chars');
 
     const normalizedLang = rawLang === 'zh-TW' || rawLang === 'en' ? rawLang : null;
@@ -736,8 +739,8 @@ function resetTrainerScrambleNavigation() {
     updateTrainerScrambleNavButtons();
 }
 
-function saveTrainerRecords(records) {
-    trainerRecords = records.slice();
+function refreshTrainerRecords(records) {
+    trainerRecords = records;
     syncLatestTrainerRecordId();
     trainerDeleteConfirmArmed = false;
     if (expandedTrainerRecordId && !trainerRecords.some((record) => record.id === expandedTrainerRecordId)) {
@@ -746,8 +749,20 @@ function saveTrainerRecords(records) {
     if (trainerHistoryDeleteConfirmRecordId && !trainerRecords.some((record) => record.id === trainerHistoryDeleteConfirmRecordId)) {
         trainerHistoryDeleteConfirmRecordId = null;
     }
-    localStorage.setItem(TRAINER_RECORDS_KEY, JSON.stringify(trainerRecords));
     renderTrainerRecords();
+}
+
+function withTrainerRecordsLock(action) {
+    const locks = typeof navigator === 'undefined' ? null : navigator.locks;
+    return locks ? locks.request(TRAINER_RECORDS_KEY, action) : action();
+}
+
+function updateTrainerRecords(update) {
+    return withTrainerRecordsLock(() => {
+        const records = update(getTrainerRecords());
+        localStorage.setItem(TRAINER_RECORDS_KEY, JSON.stringify(records));
+        refreshTrainerRecords(records);
+    });
 }
 
 function migrateLegacyFormulaData() {
@@ -904,6 +919,11 @@ function setupPwa() {
 }
 
 function setupEventListeners() {
+    window.addEventListener('storage', (event) => {
+        if (event.key === TRAINER_RECORDS_KEY || event.key === null) {
+            refreshTrainerRecords(getTrainerRecords());
+        }
+    });
     document.addEventListener('click', function (e) {
         const targetEl = e.target instanceof Element ? e.target : null;
 
@@ -1187,10 +1207,6 @@ function getMemoryStatusTargetModes(contentModes = ['word']) {
     return algorithmModes.length > 0 ? algorithmModes : normalizedModes;
 }
 
-function isMemoryContentModeActive(mode) {
-    return getSelectedMemoryContentModes().includes(mode);
-}
-
 function getContentLabelKey(mode) {
     if (mode === 'corner') return 'content_corner_label';
     if (mode === 'edge') return 'content_edge_label';
@@ -1231,14 +1247,15 @@ function getBufferPiece(contentMode) {
     return { sticker, labels };
 }
 
-function isBufferPairHidden(pair, contentMode) {
-    if (localStorage.getItem(MATRIX_BUFFER_FILTER_KEY) !== 'true') return false;
-    return getBufferPiece(contentMode).labels.some(letter => pair.startsWith(letter) || pair.endsWith(letter));
+function isBufferPairHidden(pair, contentMode, bufferLabels) {
+    const labels = bufferLabels ?? (localStorage.getItem(MATRIX_BUFFER_FILTER_KEY) === 'true'
+        ? getBufferPiece(contentMode).labels : []);
+    return labels.some(letter => pair.startsWith(letter) || pair.endsWith(letter));
 }
 
-function isOrientationPairHidden(pair, contentMode) {
+function isOrientationPairHidden(pair, contentMode, hideOrientation) {
     const type = getContentPieceType(contentMode);
-    if (localStorage.getItem(MATRIX_ORIENTATION_FILTER_KEYS[type]) !== 'true') return false;
+    if (!(hideOrientation ?? (localStorage.getItem(MATRIX_ORIENTATION_FILTER_KEYS[type]) === 'true'))) return false;
 
     const [startIndex, endIndex] = getPairIndices(pair, type);
     if (startIndex < 0 || endIndex < 0 || startIndex === endIndex) return false;
@@ -1319,6 +1336,24 @@ function getPairIndices(pair, type = 'corner') {
 function isSameCharPair(pair, type = 'corner') {
     const [startIndex, endIndex] = getPairIndices(pair, type);
     return startIndex !== -1 && startIndex === endIndex;
+}
+
+function getBlddbCaseUrl(pair, type) {
+    const indices = [getAlgorithmBufferIndex(type), ...getPairIndices(pair, type)];
+    const pieceKeys = indices.map(index => PIECE_KEYS_BY_STICKER[type][index]);
+    if (pieceKeys.includes(undefined) || new Set(pieceKeys).size !== 3) return '';
+
+    // Keep the sticker face first. BLDDB orders the other faces by U/D, F/B, L/R.
+    const faceOrder = 'UDFBLR';
+    const positions = indices.map(index => {
+        const [face, ...otherFaces] = BUFFER_STICKER_NAMES[type][index];
+        otherFaces.sort((a, b) => faceOrder.indexOf(a) - faceOrder.indexOf(b));
+        return face + otherFaces.join('');
+    });
+    const url = new URL(type, 'https://v2.blddb.net/');
+    url.searchParams.set('position', positions.join('-'));
+    url.searchParams.set('mode', 'manmade');
+    return url.href;
 }
 
 function getBuiltInAlgorithm(pair, contentMode = 'corner') {
@@ -2336,7 +2371,7 @@ function toggleTrainerClearMenu(event) {
 function requestClearTrainerRecords(type) {
     const normalizedType = normalizeTrainerAlgorithmType(type);
     const typeLabel = t(normalizedType === 'edge' ? 'algorithm_edges' : 'algorithm_corners');
-    const targetRecords = trainerRecords.filter((record) => normalizeTrainerAlgorithmType(record.algorithmType) === normalizedType);
+    const targetRecords = getTrainerRecords().filter((record) => normalizeTrainerAlgorithmType(record.algorithmType) === normalizedType);
 
     setTrainerClearMenuOpen(false);
     if (targetRecords.length === 0) {
@@ -2350,9 +2385,8 @@ function requestClearTrainerRecords(type) {
     trainerDeleteConfirmArmed = false;
     trainerHistoryDeleteConfirmRecordId = null;
     expandedTrainerRecordId = null;
-    saveTrainerRecords(
-        trainerRecords.filter((record) => normalizeTrainerAlgorithmType(record.algorithmType) !== normalizedType)
-    );
+    const targetIds = new Set(targetRecords.map(record => record.id));
+    updateTrainerRecords(records => records.filter(record => !targetIds.has(record.id)));
     setTrainerStatus(currentTrainerScramble ? 'trainer_status_idle' : 'trainer_status_no_scramble');
 }
 
@@ -2397,7 +2431,7 @@ function confirmDeleteTrainerRecord(recordId) {
 
     trainerHistoryDeleteConfirmRecordId = null;
     if (expandedTrainerRecordId === targetRecordId) expandedTrainerRecordId = null;
-    saveTrainerRecords(trainerRecords.filter((record) => record.id !== targetRecordId));
+    updateTrainerRecords(records => records.filter(record => record.id !== targetRecordId));
     setTrainerStatus(currentTrainerScramble ? 'trainer_status_idle' : 'trainer_status_no_scramble');
 }
 
@@ -2616,7 +2650,7 @@ function stopTrainerTimer() {
         createdAt: Date.now()
     };
 
-    saveTrainerRecords([nextRecord, ...trainerRecords]);
+    updateTrainerRecords(records => [nextRecord, ...records]);
     setTrainerStatus('trainer_status_stopped');
     setTrainerTimerDisplay(getTrainerDisplayTime(nextRecord));
     generateTrainerScramble({ silent: true, preserveStatus: true });
@@ -2627,15 +2661,13 @@ function toggleTrainerPenalty(penalty, recordId = null) {
     if (!targetRecordId) return;
 
     trainerHistoryDeleteConfirmRecordId = null;
-    const nextRecords = trainerRecords.map((record) => {
+    updateTrainerRecords(records => records.map((record) => {
         if (record.id !== targetRecordId) return record;
         return {
             ...record,
             penalty: record.penalty === penalty ? 'ok' : penalty
         };
-    });
-
-    saveTrainerRecords(nextRecords);
+    }));
     setTrainerStatus('trainer_status_stopped');
 }
 
@@ -3004,7 +3036,18 @@ function renderFormulaList() {
         if (!isListEntryVisible(pair, formulaDict[pair])) return;
         const div = document.createElement('div');
         div.className = 'pair-item pair-item-formula';
-        div.innerHTML = `<div class="pair-label">${pair.toUpperCase()}</div>`;
+        const caseUrl = getBlddbCaseUrl(pair, contentMode);
+        const label = document.createElement(caseUrl ? 'a' : 'div');
+        label.className = 'pair-label';
+        label.textContent = pair.toUpperCase();
+        if (caseUrl) {
+            label.href = caseUrl;
+            label.target = '_blank';
+            label.rel = 'noopener noreferrer';
+            label.title = t('blddb_pair_lookup', { pair: label.textContent });
+            label.setAttribute('aria-label', label.title);
+        }
+        div.appendChild(label);
 
         const textarea = document.createElement('textarea');
         textarea.className = 'pair-input formula-input';
@@ -3044,16 +3087,17 @@ function toggleMatrixOrientationPairs() {
 function renderMatrix(contentMode = 'word') {
     const chars = getPieceChars(contentMode);
     const type = getContentPieceType(contentMode);
+    const hideOrientation = localStorage.getItem(MATRIX_ORIENTATION_FILTER_KEYS[type]) === 'true';
     const orientationButton = document.getElementById('matrix-orientation-filter-btn');
     if (orientationButton) {
         orientationButton.textContent = t(type === 'corner' ? 'matrix_hide_twist' : 'matrix_hide_flip');
-        setActionButtonActive(orientationButton, localStorage.getItem(MATRIX_ORIENTATION_FILTER_KEYS[type]) === 'true');
+        setActionButtonActive(orientationButton, hideOrientation);
     }
     const hideBuffer = localStorage.getItem(MATRIX_BUFFER_FILTER_KEY) === 'true';
     const bufferButton = document.getElementById('matrix-buffer-filter-btn');
+    const { sticker, labels } = getBufferPiece(contentMode);
     setActionButtonActive(bufferButton, hideBuffer);
     if (bufferButton) {
-        const { sticker, labels } = getBufferPiece(contentMode);
         bufferButton.title = `${sticker} · ${labels.map(label => label.toUpperCase()).join(' / ')}`;
     }
 
@@ -3061,6 +3105,7 @@ function renderMatrix(contentMode = 'word') {
     const table = document.getElementById('full-matrix');
     const matrixWrapper = document.getElementById('matrix-area');
     const dict = getContentDict(contentMode);
+    const snapshot = { dict, statusMap: getStatusMap(contentMode), bufferLabels: hideBuffer ? labels : [], hideOrientation };
     if (matrixWrapper) {
         matrixWrapper.classList.toggle('formula-matrix-mode', isAlgorithmContentMode(contentMode));
         matrixWrapper.classList.remove('is-marking');
@@ -3091,7 +3136,7 @@ function renderMatrix(contentMode = 'word') {
         let rowHtml = `<tr><th><input value="${escapeHtmlAttribute(rowChar.toUpperCase())}" onchange="updateGlobalChar(${rowIndex}, this.value)" class="header-input char-idx-${rowIndex}"${readOnly}></th>`;
         chars.forEach(colChar => {
             const pair = rowChar + colChar;
-            const stColor = getPairColor(pair, contentMode);
+            const stColor = getPairColor(pair, contentMode, snapshot);
             let cellClass = stColor ? `status-${stColor}` : '';
             const val = dict[pair] || '';
             const placeholder = isAlgorithmContentMode(contentMode) ? getAlgorithmPlaceholder(pair, contentMode) : '';
@@ -3656,31 +3701,6 @@ async function exportData() {
         const statusMap = getStatusMap();
         const cornerFormulaStatusMap = getStatusMap('corner');
         const edgeFormulaStatusMap = getStatusMap('edge');
-        const cleanDict = {};
-        const cleanCornerFormulaDict = {};
-        const cleanEdgeFormulaDict = {};
-        const cleanStatus = {};
-        const cleanCornerFormulaStatus = {};
-        const cleanEdgeFormulaStatus = {};
-
-        chars.forEach(start => {
-            chars.forEach(end => {
-                const pair = start + end;
-                if (dict[pair]) {
-                    cleanDict[pair] = dict[pair];
-                    if (statusMap[pair]) cleanStatus[pair] = statusMap[pair];
-                }
-                if (cornerFormulaDict[pair]) {
-                    cleanCornerFormulaDict[pair] = cornerFormulaDict[pair];
-                    if (cornerFormulaStatusMap[pair]) cleanCornerFormulaStatus[pair] = cornerFormulaStatusMap[pair];
-                }
-                if (edgeFormulaDict[pair]) {
-                    cleanEdgeFormulaDict[pair] = edgeFormulaDict[pair];
-                    if (edgeFormulaStatusMap[pair]) cleanEdgeFormulaStatus[pair] = edgeFormulaStatusMap[pair];
-                }
-            });
-        });
-
         const backupPayload = {
             version: 3,
             exportedAt: new Date().toISOString(),
@@ -3698,7 +3718,7 @@ async function exportData() {
                     edge: edgeFormulaStatusMap
                 },
                 trainer: {
-                    records: trainerRecords
+                    records: getTrainerRecords()
                 },
                 settings: {
                     chars: getPieceChars(),
@@ -3722,66 +3742,84 @@ async function exportData() {
 
 function importData() {
     const fileInput = document.getElementById('file-input');
-    const f = fileInput.files[0];
-    if (!f) return; const r = new FileReader(); r.onload = (e) => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onerror = () => {
+        fileInput.value = '';
+        alert(t('alert_import_error'));
+    };
+    reader.onload = async () => {
         try {
-            const parsedData = JSON.parse(e.target.result);
-            const normalizedData = normalizeBackupPayload(parsedData);
+            const backup = normalizeBackupPayload(JSON.parse(reader.result));
+            if (!confirm(t('confirm_restore_backup'))) return;
+            await withTrainerRecordsLock(() => restoreBackup(backup));
 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedData.dict));
-            localStorage.setItem(EDGE_WORD_STORAGE_KEY, JSON.stringify(normalizedData.edgeWordDict));
-            localStorage.setItem(EDGE_WORD_STATUS_KEY, JSON.stringify(normalizedData.edgeWordStatus));
-            localStorage.setItem(CORNER_FORMULA_STORAGE_KEY, JSON.stringify(normalizedData.cornerFormulaDict));
-            localStorage.setItem(EDGE_FORMULA_STORAGE_KEY, JSON.stringify(normalizedData.edgeFormulaDict));
-            localStorage.setItem(STATUS_KEY, JSON.stringify(normalizedData.status));
-            localStorage.setItem(CORNER_FORMULA_STATUS_KEY, JSON.stringify(normalizedData.cornerFormulaStatus));
-            localStorage.setItem(EDGE_FORMULA_STATUS_KEY, JSON.stringify(normalizedData.edgeFormulaStatus));
-            localStorage.setItem(TRAINER_RECORDS_KEY, JSON.stringify(normalizedData.trainerRecords));
-            trainerRecords = normalizedData.trainerRecords;
-            syncLatestTrainerRecordId();
-            trainerDeleteConfirmArmed = false;
+            letteringState = null;
+            chars = readStoredJson(CHARS_KEY, chars);
+            chars = [...getPieceChars()];
+            currentLang = backup.lang ?? currentLang;
+            loadAlgorithmBufferSettings();
             expandedTrainerRecordId = null;
             trainerHistoryDeleteConfirmRecordId = null;
+            refreshTrainerRecords(getTrainerRecords());
             resetTrainerScrambleNavigation();
-
-            letteringState = normalizedData.lettering;
-            if (letteringState) { saveLetteringState(); } else { localStorage.removeItem(LETTERING_KEY); }
-            if (normalizedData.chars) {
-                chars = normalizedData.chars;
-                localStorage.setItem(CHARS_KEY, JSON.stringify(chars));
-                if (getCurrentCharScheme() === 'custom') saveCustomChars(chars);
-            }
-
-            if (normalizedData.lang) {
-                currentLang = normalizedData.lang;
-                localStorage.setItem(LANG_KEY, currentLang);
-            }
-
-            if (normalizedData.algorithmBuffers) {
-                for (const type of ['corner', 'edge']) {
-                    if (normalizedData.algorithmBuffers[type] == null) continue;
-                    const index = normalizedData.algorithmBuffers[type];
-                    currentAlgorithmBufferIndices[type] = index;
-                    localStorage.setItem(getAlgorithmBufferStorageKey(type), JSON.stringify(index));
-                }
-                resetTrainerScrambleNavigation();
-            }
-
-            fileInput.value = '';
-            alert(t('alert_import_success'));
-            ensureLetteringState();
             initUI();
             applyLanguage();
             updateLayoutMode();
             renderCurrentListView();
-            renderTrainerRecords();
             generateTrainerScramble({ silent: true, resetTimerDisplay: true });
-        } catch (err) {
-            fileInput.value = '';
+            alert(t('alert_import_success'));
+        } catch (error) {
             alert(t('alert_import_error'));
+        } finally {
+            fileInput.value = '';
         }
     };
-    r.readAsText(f);
+    reader.readAsText(file);
+}
+
+function restoreBackup(backup) {
+    const data = {
+        [STORAGE_KEY]: backup.dict,
+        [EDGE_WORD_STORAGE_KEY]: backup.edgeWordDict,
+        [EDGE_WORD_STATUS_KEY]: backup.edgeWordStatus,
+        [CORNER_FORMULA_STORAGE_KEY]: backup.cornerFormulaDict,
+        [EDGE_FORMULA_STORAGE_KEY]: backup.edgeFormulaDict,
+        [STATUS_KEY]: backup.status,
+        [CORNER_FORMULA_STATUS_KEY]: backup.cornerFormulaStatus,
+        [EDGE_FORMULA_STATUS_KEY]: backup.edgeFormulaStatus,
+        [TRAINER_RECORDS_KEY]: backup.trainerRecords
+    };
+    if (backup.lettering || backup.chars) {
+        data[LETTERING_KEY] = backup.lettering;
+        data[CHARS_KEY] = backup.lettering?.active.corner ?? backup.chars;
+        if (backup.lettering || (!isSameCharScheme(backup.chars, CHARS_EN) && !isSameCharScheme(backup.chars, CHARS_ZH))) {
+            data[CUSTOM_CHARS_KEY] = backup.lettering?.custom.corner ?? backup.chars;
+        }
+    }
+    for (const [type, index] of Object.entries(backup.algorithmBuffers ?? {})) {
+        data[getAlgorithmBufferStorageKey(type)] = index;
+    }
+
+    const writes = Object.entries(data).map(([key, value]) => [key, value === null ? null : JSON.stringify(value)]);
+    if (backup.lang) writes.push([LANG_KEY, backup.lang]);
+    const applied = [];
+    try {
+        for (const [key, value] of writes) {
+            const previous = localStorage.getItem(key);
+            writeBackupEntry(key, value);
+            applied.push([key, previous]);
+        }
+    } catch (error) {
+        for (const [key, value] of applied.reverse()) writeBackupEntry(key, value);
+        throw error;
+    }
+}
+
+function writeBackupEntry(key, value) {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
 }
 function clearAllData() {
     if (confirm(t('alert_reset'))) {

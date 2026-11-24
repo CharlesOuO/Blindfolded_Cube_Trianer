@@ -1,11 +1,11 @@
-const CACHE_NAME = 'bld-letter-pairs-v21';
+const CACHE_NAME = 'bld-letter-pairs-v23';
 const APP_SHELL = [
     './',
     './index.html',
-    './style.css?v=20261124l',
+    './style.css?v=20261124n',
     './built-in-algorithms.js?v=20261005b',
-    './script.js?v=20261124l',
-    './lettering.js?v=20261124m',
+    './script.js?v=20261124o',
+    './lettering.js?v=20261124o',
     './manifest.webmanifest',
     './icons/icon-192.png',
     './icons/icon-512.png',
@@ -24,7 +24,7 @@ self.addEventListener('install', (event) => {
         await Promise.all(EXTERNAL_ASSETS.map(async (url) => {
             try {
                 const response = await fetch(url, { mode: 'no-cors' });
-                await cache.put(url, response);
+                if (response.ok || response.type === 'opaque') await cache.put(url, response);
             } catch (error) {
                 // The app shell still installs when an optional CDN asset is unavailable.
             }
@@ -53,9 +53,12 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
         event.respondWith((async () => {
             try {
-                const response = await fetch(request);
-                const cache = await caches.open(CACHE_NAME);
-                await cache.put('./index.html', response.clone());
+                const response = await fetch(request, { cache: 'no-cache' });
+                const scope = new URL(self.registration.scope);
+                const path = new URL(request.url).pathname;
+                if (response.ok && (path === scope.pathname || path === scope.pathname + 'index.html')) {
+                    await caches.open(CACHE_NAME).then(cache => cache.put('./index.html', response.clone())).catch(() => {});
+                }
                 return response;
             } catch (error) {
                 return (await caches.match('./index.html')) || Response.error();
@@ -74,8 +77,11 @@ self.addEventListener('fetch', (event) => {
 
         try {
             const response = await fetch(request);
-            const cache = await caches.open(CACHE_NAME);
-            await cache.put(request, response.clone());
+            if (response.ok || response.type === 'opaque') {
+                await caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone())).catch(() => {});
+            } else if (cachedResponse) {
+                return cachedResponse;
+            }
             return response;
         } catch (error) {
             return cachedResponse || Response.error();

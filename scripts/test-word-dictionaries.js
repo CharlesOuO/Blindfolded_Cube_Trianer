@@ -62,7 +62,25 @@ assert.equal(run("getPairContentValue('ab','word')"), 'corner');
 assert.equal(run("getPairColor('xw','edge-word')"), 'green');
 assert.equal(run("JSON.stringify(getPairIndices('xw', 'edge'))"), '[0,1]');
 assert.equal(run("JSON.stringify(getPairIndices('ab', 'corner'))"), '[0,1]');
-assert.equal(run("normalizeBackupPayload({sections:{settings:{lettering:ensureLetteringState()}}}).lettering.active.edge[0]"), 'x');
+assert.equal(run("normalizeBackupPayload({dict: {}, sections:{settings:{lettering:ensureLetteringState()}}}).lettering.active.edge[0]"), 'x');
+assert.throws(() => run("normalizeBackupPayload({lang:'en'})"), /Invalid or incomplete backup/);
+assert.throws(() => run("normalizeBackupPayload({version:3, dict:{}})"), /Invalid or incomplete backup/);
+const beforeRestore = new Map(stored);
+const writeLocal = context.localStorage.setItem;
+context.localStorage.setItem = (key, value) => {
+    if (key === run('CORNER_FORMULA_STORAGE_KEY')) throw new Error('Storage full');
+    writeLocal(key, value);
+};
+assert.throws(() => run("restoreBackup(normalizeBackupPayload({dict:{ab:'replacement'}}))"), /Storage full/);
+context.localStorage.setItem = writeLocal;
+assert.deepEqual(stored, beforeRestore);
+run("const originalRenderTrainerRecords = renderTrainerRecords; renderTrainerRecords = () => {}; trainerRecords = []");
+const trainerStorageKey = run('TRAINER_RECORDS_KEY');
+stored.set(trainerStorageKey, JSON.stringify([{id: 'from-another-tab', rawTimeMs: 1000}]));
+run("updateTrainerRecords(records => [{id: 'from-this-tab', rawTimeMs: 1500}, ...records])");
+assert.deepEqual(JSON.parse(stored.get(trainerStorageKey)).map(record => record.id), ['from-this-tab', 'from-another-tab']);
+stored.delete(trainerStorageKey);
+run("trainerRecords = []; renderTrainerRecords = originalRenderTrainerRecords");
 const matrix = { innerHTML: '' };
 const editToggle = { checked: false };
 const bufferFilter = {

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description"
         content="3BLD(3 style & letter pairs) practice with words, corners, edges, flashcards, typing tests, and local backup.">
-    <meta name="theme-color" content="#4b5563">
+    <meta name="theme-color" content="#ffffff">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -17,7 +17,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20261005b">
+    <link rel="stylesheet" href="style.css?v=20261124l">
 </head>
 
 <body class="app-booting" onload="bootApp()">
@@ -32,69 +32,136 @@
         </div>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-container">
-            <button class="nav-btn active" onclick="switchTab('list')" data-i18n="nav_list"></button>
-            <button class="nav-btn" onclick="switchTab('memory')" data-i18n="nav_mem"></button>
-            <button class="nav-btn" onclick="switchTab('trainer')" data-i18n="nav_trainer"></button>
-            <button class="nav-btn" onclick="switchTab('data')" data-i18n="nav_data"></button>
+    <header class="app-shell">
+        <div class="app-header">
+            <button type="button" class="brand" onclick="switchTab('list')" aria-label="3BLD">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-name">3BLD</span>
+            </button>
         </div>
-    </div>
+        <nav class="nav-bar" aria-label="Main navigation" data-i18n-aria-label="nav_label">
+            <div class="nav-container">
+                <button type="button" class="nav-btn active" data-view="list" aria-current="page" onclick="switchTab('list')">
+                    <span class="nav-icon icon-pairs" aria-hidden="true"></span><span data-i18n="nav_list"></span>
+                </button>
+                <button type="button" class="nav-btn" data-view="memory" onclick="switchTab('memory')">
+                    <span class="nav-icon icon-cards" aria-hidden="true"></span><span data-i18n="nav_mem"></span>
+                </button>
+                <button type="button" class="nav-btn" data-view="trainer" onclick="switchTab('trainer')">
+                    <span class="nav-icon icon-timer" aria-hidden="true"></span><span data-i18n="nav_trainer_short"></span>
+                </button>
+                <button type="button" class="nav-btn" data-view="data" onclick="switchTab('data')">
+                    <span class="nav-icon icon-settings" aria-hidden="true"></span><span data-i18n="nav_data"></span>
+                </button>
+            </div>
+        </nav>
+    </header>
 
-    <div id="main-container" class="container">
+    <main id="main-container" class="container">
 
         <div id="view-list" class="view-section active">
-            <div class="control-panel">
-                <div class="control-row list-controls-row">
-                    <button id="btn-mode-list" class="action-btn" onclick="toggleViewMode('list')"><span
-                            data-i18n="mode_card"></span></button>
-                    <button id="btn-mode-matrix" class="action-btn" onclick="toggleViewMode('matrix')"><span
-                            data-i18n="mode_matrix"></span></button>
+            <div class="workspace-heading"><h1 data-i18n="workspace_list_title"></h1></div>
+            <div class="control-panel list-controls">
+                <div class="list-mode-switcher">
+                    <div class="list-mode-group" role="group" aria-labelledby="list-piece-label">
+                        <span id="list-piece-label" class="list-mode-group-label" data-i18n="algorithm_type"></span>
+                        <div class="list-mode-group-actions">
+                            <button type="button" id="btn-algorithm-type-corner" class="action-btn mode-choice-btn" onclick="setAlgorithmType('corner')" data-i18n="algorithm_corners"></button>
+                            <button type="button" id="btn-algorithm-type-edge" class="action-btn mode-choice-btn" onclick="setAlgorithmType('edge')" data-i18n="algorithm_edges"></button>
+                        </div>
+                    </div>
+                    <div class="list-mode-group" role="group" aria-labelledby="list-content-label">
+                        <span id="list-content-label" class="list-mode-group-label" data-i18n="switch_content"></span>
+                        <div class="list-mode-group-actions">
+                            <button type="button" id="btn-mode-content-word" class="action-btn mode-choice-btn" onclick="setListContentMode('word')" data-i18n="switch_words"></button>
+                            <button type="button" id="btn-mode-content-formula" class="action-btn mode-choice-btn" onclick="setListContentMode('formula')" data-i18n="switch_algorithm"></button>
+                        </div>
+                    </div>
+                    <div class="list-mode-group layout-options" role="group" aria-labelledby="list-layout-label">
+                        <span id="list-layout-label" class="list-mode-group-label" data-i18n="switch_layout"></span>
+                        <div class="list-mode-group-actions">
+                            <button type="button" id="btn-mode-list" class="action-btn mode-choice-btn" onclick="setListLayoutMode('list')" data-i18n="switch_list"></button>
+                            <button type="button" id="btn-mode-matrix" class="action-btn mode-choice-btn" onclick="setListLayoutMode('matrix')" data-i18n="switch_matrix"></button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="list-mode-controls">
-                    <div class="control-row">
-                        <label data-i18n="lbl_start_char" class="control-label"></label>
-                        <select id="char-select" onchange="renderList()" class="form-select"></select>
+                    <label for="char-select" data-i18n="list_start_code" class="control-label"></label>
+                    <div class="start-char-navigation">
+                        <button type="button" id="list-char-prev" class="action-btn" onclick="stepListCharacter(-1)" data-i18n-aria-label="list_previous_group"><span class="chevron left" aria-hidden="true"></span></button>
+                        <select id="char-select" class="form-select"></select>
+                        <button type="button" id="list-char-next" class="action-btn" onclick="stepListCharacter(1)" data-i18n-aria-label="list_next_group"><span class="chevron right" aria-hidden="true"></span></button>
                     </div>
                 </div>
 
-                <div id="matrix-settings" class="hidden">
-                    <div class="control-row matrix-settings-row">
-                        <span class="matrix-settings-hint" data-i18n="hint_matrix_edit"></span>
-                        <span id="active-pair-label" class="active-pair-label"></span>
-
-                        <!-- Read-only Toggle -->
-                        <div class="toggle-switch-wrapper">
-                            <span class="toggle-switch-label" data-i18n="lbl_edit_mode"></span>
-                            <label class="switch">
-                                <input type="checkbox" id="matrix-edit-toggle" onchange="toggleMatrixEdit(this.checked)"
-                                    checked>
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-
-                        <button class="btn-sm" onclick="resetDefaultChars()" data-i18n="btn_reset_chars"></button>
-                    </div>
-                    <div class="control-row matrix-grade-row">
-                        <button class="btn-grade bg-green" onclick="setMatrixStatus('green')"
-                            data-i18n="fb_good"></button>
-                        <button class="btn-grade bg-yellow" onclick="setMatrixStatus('yellow')"
-                            data-i18n="fb_slow"></button>
-                        <button class="btn-grade bg-red" onclick="setMatrixStatus('red')"
-                            data-i18n="fb_wrong"></button>
-                        <button class="btn-grade bg-gray matrix-grade-offset" onclick="setMatrixStatus('gray')"
-                            data-i18n="btn_hide"></button>
-                    </div>
-                </div>
-
-                <!-- Reset button removed -->
             </div>
 
+            <div id="list-editor-toolbar" class="list-editor-toolbar">
+                <div class="list-editor-summary">
+                    <div class="list-progress-group"><span id="list-progress"></span><progress id="list-progress-meter" value="0" max="1" aria-hidden="true"></progress></div>
+                    <span id="list-save-status" class="list-save-status" role="status" data-i18n="list_save_hint"></span>
+                </div>
+                <div class="list-filter-row">
+                    <label class="list-search">
+                        <span class="search-icon" aria-hidden="true"></span>
+                        <input id="list-search" type="search" data-i18n-placeholder="list_search_placeholder" data-i18n-aria-label="list_search_label" oninput="renderCurrentListView()" autocomplete="off">
+                    </label>
+                    <select id="list-entry-filter" class="form-select" data-i18n-aria-label="list_filter_label" onchange="renderCurrentListView()">
+                        <option value="all" data-i18n="list_filter_all"></option>
+                        <option value="empty" data-i18n="list_filter_empty"></option>
+                        <option value="filled" data-i18n="list_filter_filled"></option>
+                    </select>
+                </div>
+            </div>
+            <div id="list-empty-state" class="list-empty-state hidden" data-i18n="list_no_results"></div>
             <div id="grid-area" class="grid-container"></div>
+            <p id="list-keyboard-hint" class="list-keyboard-hint" data-i18n="list_keyboard_hint"></p>
 
-            <div id="matrix-area" class="matrix-wrapper hidden">
-                <table id="full-matrix" class="matrix-table"></table>
+            <div class="matrix-workspace">
+                <div id="matrix-settings" class="matrix-toolbar hidden">
+                    <div class="matrix-tool-group" role="group" aria-labelledby="matrix-grade-title">
+                        <div class="matrix-tool-caption">
+                            <span id="matrix-grade-title" data-i18n="matrix_familiarity"></span>
+                            <span id="active-pair-label" class="active-pair-label" role="status"></span>
+                        </div>
+                        <div id="matrix-grade-actions" class="matrix-tool-actions matrix-grade-actions">
+                            <button type="button" class="btn-grade bg-green" data-grade="green" aria-pressed="false" onclick="setMatrixStatus('green')" data-i18n="fb_good"></button>
+                            <button type="button" class="btn-grade bg-yellow" data-grade="yellow" aria-pressed="false" onclick="setMatrixStatus('yellow')" data-i18n="fb_slow"></button>
+                            <button type="button" class="btn-grade bg-red" data-grade="red" aria-pressed="false" onclick="setMatrixStatus('red')" data-i18n="fb_wrong"></button>
+                            <button type="button" class="btn-grade bg-gray" data-grade="gray" aria-pressed="false" onclick="setMatrixStatus('gray')" data-i18n="btn_hide"></button>
+                            <button type="button" id="matrix-marking-done" class="btn-sm matrix-marking-done hidden"
+                                onclick="setMatrixMarkingGrade(null)" data-i18n="matrix_finish_marking"></button>
+                        </div>
+                    </div>
+                    <div class="matrix-tool-group" role="group" aria-labelledby="matrix-filter-title">
+                        <span id="matrix-filter-title" class="matrix-tool-caption" data-i18n="matrix_practice_filters"></span>
+                        <div class="matrix-tool-actions matrix-filter-actions">
+                            <button type="button" id="matrix-buffer-filter-btn" class="btn-grade matrix-filter-toggle"
+                                onclick="toggleMatrixBufferPairs()" aria-pressed="false" data-i18n="matrix_hide_buffer_pairs"></button>
+                            <button type="button" id="matrix-orientation-filter-btn" class="btn-grade matrix-filter-toggle"
+                                onclick="toggleMatrixOrientationPairs()" aria-pressed="false"></button>
+                        </div>
+                    </div>
+                    <div class="matrix-tool-group matrix-edit-group" role="group" aria-labelledby="matrix-edit-title">
+                        <span id="matrix-edit-title" class="matrix-tool-caption" data-i18n="matrix_edit_lettering"></span>
+                        <div class="matrix-tool-actions">
+                            <label class="toggle-switch-wrapper matrix-edit-toggle">
+                                <span class="toggle-switch-label" data-i18n="lbl_edit_mode"></span>
+                                <span class="switch">
+                                    <input type="checkbox" id="matrix-edit-toggle" onchange="toggleMatrixEdit(this.checked)"
+                                        data-i18n-aria-label="lbl_edit_mode" aria-describedby="matrix-edit-hint" checked>
+                                    <span class="slider round"></span>
+                                </span>
+                            </label>
+                            <button type="button" class="btn-sm" onclick="resetDefaultChars()" data-i18n="btn_reset_chars"></button>
+                        </div>
+                        <span id="matrix-edit-hint" class="visually-hidden" data-i18n="hint_matrix_edit"></span>
+                    </div>
+                </div>
+                <div id="matrix-area" class="matrix-wrapper hidden" role="region" tabindex="0" data-i18n-aria-label="matrix_table_label">
+                    <table id="full-matrix" class="matrix-table"></table>
+                </div>
             </div>
 
             <div id="matrix-footer" class="control-row hidden matrix-footer-shell">
@@ -104,6 +171,7 @@
         </div>
 
         <div id="view-memory" class="view-section">
+            <div class="workspace-heading"><h1 data-i18n="workspace_memory_title"></h1></div>
             <div class="control-panel">
                 <div class="control-row control-row-wrap">
                     <div class="dropdown-wrapper range-dropdown">
@@ -165,6 +233,7 @@
         </div>
 
         <div id="view-trainer" class="view-section">
+            <div class="workspace-heading"><h1 data-i18n="workspace_trainer_title"></h1></div>
             <div class="control-panel">
                 <div class="control-row control-row-wrap">
                     <div class="dropdown-wrapper range-dropdown">
@@ -208,23 +277,25 @@
                         <button id="btn-trainer-type-edge" class="action-btn" onclick="setTrainerAlgorithmType('edge')"
                             data-i18n="algorithm_edges"></button>
                     </div>
-                    <div class="trainer-toolbar-actions">
-                        <button class="action-btn" id="trainer-prev-btn" onclick="goToPreviousTrainerScramble()"
-                            data-i18n="btn_prev_scramble"></button>
-                        <button class="action-btn" id="trainer-generate-btn" onclick="goToNextTrainerScramble()"
-                            data-i18n="btn_generate_scramble"></button>
-                    </div>
                 </div>
             </div>
             <div class="card-area-test trainer-card">
                 <div class="trainer-panel">
-                    <div class="trainer-panel-label" data-i18n="trainer_scramble_label"></div>
+                    <div class="trainer-scramble-header">
+                        <div class="trainer-panel-label" data-i18n="trainer_scramble_label"></div>
+                        <div class="trainer-toolbar-actions">
+                            <button class="action-btn" id="trainer-prev-btn" onclick="goToPreviousTrainerScramble()"
+                                data-i18n="btn_prev_scramble"></button>
+                            <button class="action-btn" id="trainer-generate-btn" onclick="goToNextTrainerScramble()"
+                                data-i18n="btn_generate_scramble"></button>
+                        </div>
+                    </div>
                     <div id="trainer-scramble" class="trainer-scramble-text"
                         data-i18n="trainer_scramble_placeholder"></div>
                 </div>
                 <div class="trainer-timer-shell">
                     <div id="trainer-timer" class="trainer-timer-display">0.00</div>
-                    <div id="trainer-status" class="trainer-status">Corners</div>
+                    <div id="trainer-status" class="trainer-status" role="status"></div>
                 </div>
                 <div id="trainer-penalty-shell" class="trainer-penalty-shell hidden">
                     <div class="trainer-penalty-row trainer-penalty-row-compact">
@@ -283,146 +354,125 @@
             </div>
         </div>
         <div id="view-data" class="view-section">
-            <div class="control-panel">
-                <div class="backup-container">
-                    <div class="backup-group">
-                        <div class="backup-group-label" data-i18n="settings_formula_title"></div>
-                        <div class="settings-info-card">
-                            <p class="settings-info-text">
-                                <span data-i18n="settings_formula_prefix"></span><a
-                                    href="https://blddb.net/" target="_blank" rel="noopener noreferrer">BLDDB</a><span
-                                    data-i18n="settings_formula_suffix"></span>
-                            </p>
-                        </div>
+            <div class="workspace-heading"><h1 data-i18n="workspace_data_title"></h1></div>
+            <div class="settings-workspace">
+                <section class="settings-section settings-inline" aria-labelledby="settings-language-title">
+                    <h2 id="settings-language-title" data-i18n="settings_language_label"></h2>
+                    <button type="button" id="lang-toggle-btn" class="action-btn" onclick="toggleLanguage()"
+                        data-i18n="btn_toggle_lang"></button>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settings-lettering-title">
+                    <h2 id="settings-lettering-title" data-i18n="settings_chars_label"></h2>
+                    <div class="settings-char-btn-row" role="group" aria-labelledby="settings-lettering-title">
+                        <button type="button" id="chars-zh-btn" class="action-btn settings-char-btn"
+                            onclick="setCharScheme('zh')" data-i18n="btn_chars_zh"></button>
+                        <button type="button" id="chars-en-btn" class="action-btn settings-char-btn"
+                            onclick="setCharScheme('en')" data-i18n="btn_chars_en"></button>
+                        <button type="button" id="chars-custom-btn" class="action-btn settings-char-btn"
+                            onclick="setCharScheme('custom')" data-i18n="btn_chars_custom"></button>
                     </div>
+                    <details class="lettering-disclosure">
+                        <summary data-i18n="settings_edit_lettering"></summary>
+                        <div id="lettering-net-editor" class="lettering-net-editor"></div>
+                    </details>
+                </section>
 
-                    <div class="backup-group">
-                        <div class="backup-group-label" data-i18n="settings_buffer_label"></div>
-                        <div class="settings-action-card settings-buffer-card">
-                            <p class="settings-action-text" data-i18n="settings_buffer_hint"></p>
-                            <div class="settings-buffer-grid">
-                                <label class="settings-buffer-field" for="corner-buffer-select">
-                                    <span data-i18n="settings_corner_buffer"></span>
-                                    <span class="styled-select-wrapper">
-                                        <select id="corner-buffer-select" class="styled-select"
-                                            onchange="setAlgorithmBuffer('corner', this.value)"></select>
-                                        <span class="select-arrow" aria-hidden="true">&#9662;</span>
-                                    </span>
-                                </label>
-                                <label class="settings-buffer-field" for="edge-buffer-select">
-                                    <span data-i18n="settings_edge_buffer"></span>
-                                    <span class="styled-select-wrapper">
-                                        <select id="edge-buffer-select" class="styled-select"
-                                            onchange="setAlgorithmBuffer('edge', this.value)"></select>
-                                        <span class="select-arrow" aria-hidden="true">&#9662;</span>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
+                <section class="settings-section" aria-labelledby="settings-buffer-title">
+                    <h2 id="settings-buffer-title" data-i18n="settings_buffer_label"></h2>
+                    <div class="settings-buffer-grid">
+                        <label class="settings-buffer-field" for="corner-buffer-select">
+                            <span data-i18n="settings_corner_buffer"></span>
+                            <span class="styled-select-wrapper">
+                                <select id="corner-buffer-select" class="styled-select"
+                                    onchange="setAlgorithmBuffer('corner', this.value)"></select>
+                                <span class="select-arrow" aria-hidden="true"></span>
+                            </span>
+                        </label>
+                        <label class="settings-buffer-field" for="edge-buffer-select">
+                            <span data-i18n="settings_edge_buffer"></span>
+                            <span class="styled-select-wrapper">
+                                <select id="edge-buffer-select" class="styled-select"
+                                    onchange="setAlgorithmBuffer('edge', this.value)"></select>
+                                <span class="select-arrow" aria-hidden="true"></span>
+                            </span>
+                        </label>
                     </div>
+                    <p class="settings-info-text settings-note">
+                        <span data-i18n="settings_formula_prefix"></span><a
+                            href="https://blddb.net/" target="_blank" rel="noopener noreferrer">BLDDB</a><span
+                            data-i18n="settings_formula_suffix"></span>
+                    </p>
+                </section>
 
-                    <div id="pwa-install-group" class="backup-group hidden">
-                        <div class="backup-group-label" data-i18n="settings_install_label"></div>
-                        <div class="settings-action-card settings-install-card">
-                            <p id="pwa-install-hint" class="settings-action-text" data-i18n="settings_install_hint"></p>
-                            <button id="pwa-install-btn" type="button" class="action-btn settings-install-btn"
-                                onclick="requestPwaInstall()" data-i18n="settings_install_button"></button>
+                <section class="settings-section" aria-labelledby="settings-backup-title">
+                    <h2 id="settings-backup-title" data-i18n="title_backup"></h2>
+                    <div class="export-controls">
+                        <div class="styled-select-wrapper">
+                            <select id="export-type" class="styled-select" data-i18n-aria-label="settings_export_format">
+                                <option value="json" data-i18n="opt_json"></option>
+                                <option value="csv" data-i18n="opt_csv"></option>
+                            </select>
+                            <span class="select-arrow" aria-hidden="true"></span>
                         </div>
+                        <button class="action-btn btn-export" onclick="exportData()" data-i18n="btn_export_exec"></button>
                     </div>
-
-                    <div class="backup-group">
-                        <div class="backup-group-label" data-i18n="settings_language_label"></div>
-                        <div class="settings-action-card">
-                            <p class="settings-action-text" data-i18n="settings_language_hint"></p>
-                            <button id="lang-toggle-btn" class="action-btn settings-lang-btn" onclick="toggleLanguage()"
-                                data-i18n="btn_toggle_lang"></button>
+                    <div class="export-controls">
+                        <div class="styled-select-wrapper file-input-wrapper">
+                            <input type="file" id="file-input" accept=".json" class="file-input"
+                                data-i18n-aria-label="lbl_select_file">
                         </div>
+                        <button class="action-btn btn-export" onclick="importData()" data-i18n="btn_import"></button>
                     </div>
-
-                    <div class="backup-group">
-                        <div class="backup-group-label" data-i18n="settings_chars_label"></div>
-                        <div class="settings-action-card settings-char-card">
-                            <div class="settings-char-btn-row">
-                                <button id="chars-zh-btn" class="action-btn settings-char-btn" onclick="setCharScheme('zh')"
-                                    data-i18n="btn_chars_zh"></button>
-                                <button id="chars-en-btn" class="action-btn settings-char-btn" onclick="setCharScheme('en')"
-                                    data-i18n="btn_chars_en"></button>
-                                <button id="chars-custom-btn" class="action-btn settings-char-btn" onclick="setCharScheme('custom')"
-                                    data-i18n="btn_chars_custom"></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="lettering-net-editor" class="lettering-net-editor"></div>
-
-                    <div class="backup-group">
-                        <div class="backup-group-label" data-i18n="title_backup"></div>
-                        <div class="export-controls">
-                            <div class="styled-select-wrapper">
-                                <select id="export-type" class="styled-select">
-                                    <option value="json" data-i18n="opt_json"></option>
-                                    <option value="csv" data-i18n="opt_csv"></option>
-                                </select>
-                                <span class="select-arrow">▼</span>
-                            </div>
-                            <button class="action-btn btn-export" onclick="exportData()">
-                                <span data-i18n="btn_export_exec"></span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="backup-group">
-                        <div class="export-controls import-controls-row">
-                            <div class="styled-select-wrapper file-input-wrapper">
-                                <input type="file" id="file-input" accept=".json" class="file-input"
-                                    aria-label="Import File">
-                            </div>
-                            <button class="action-btn btn-export" onclick="importData()" data-i18n="btn_import"></button>
-                        </div>
-                    </div>
-
-                    <div class="danger-zone">
+                    <div class="settings-danger-row">
                         <button class="btn-danger action-btn btn-full-danger" onclick="clearAllData()"
                             data-i18n="btn_clear_all"></button>
                     </div>
+                </section>
 
-                </div>
+                <section id="pwa-install-group" class="settings-section settings-inline hidden" aria-labelledby="settings-install-title">
+                    <div>
+                        <h2 id="settings-install-title" data-i18n="settings_install_label"></h2>
+                        <p id="pwa-install-hint" class="settings-note" data-i18n="settings_install_hint"></p>
+                    </div>
+                    <button id="pwa-install-btn" type="button" class="action-btn settings-install-btn"
+                        onclick="requestPwaInstall()" data-i18n="settings_install_button"></button>
+                </section>
             </div>
+            <footer class="main-footer">
+                <div class="social-icons">
+                    <a href="https://www.worldcubeassociation.org/persons/2020LINC05" target="_blank"
+                        rel="noopener noreferrer" class="icon-link" aria-label="WCA Profile" title="WCA Profile"><svg
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M12.0003 2.50815L2.8374 7.11885L12.0003 12.3331L21.1631 7.11885L12.0003 2.50815ZM1.64209 8.65082V16.892L10.893 22.091V13.8499L1.64209 8.65082ZM13.1075 13.8499V22.091L22.3584 16.892V8.65082L13.1075 13.8499Z" />
+                        </svg></a>
+                    <a href="https://www.instagram.com/chihjialin/" target="_blank" rel="noopener noreferrer"
+                        class="icon-link" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24">
+                            <path
+                                d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
+                        </svg></a>
+                    <a href="https://github.com/CharlesOuO/Blindfolded-Letter-Pairs" target="_blank" rel="noopener noreferrer" class="icon-link"
+                        aria-label="GitHub" title="GitHub"><svg viewBox="0 0 24 24">
+                            <path
+                                d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" />
+                        </svg></a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com" target="_blank"
+                        rel="noopener noreferrer" class="icon-link" aria-label="Email" title="Gmail"><svg viewBox="0 0 24 24">
+                            <path
+                                d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
+                        </svg></a>
+                </div>
+                <div class="footer-meta">&copy; 2026 Charles Lin. WCA ID: 2020LINC05</div>
+            </footer>
         </div>
-    </div>
-
-    <footer class="main-footer">
-        <div class="social-icons">
-            <a href="https://www.worldcubeassociation.org/persons/2020LINC05" target="_blank"
-                rel="noopener noreferrer" class="icon-link" aria-label="WCA Profile" title="WCA Profile"><svg
-                    viewBox="0 0 24 24">
-                    <path
-                        d="M12.0003 2.50815L2.8374 7.11885L12.0003 12.3331L21.1631 7.11885L12.0003 2.50815ZM1.64209 8.65082V16.892L10.893 22.091V13.8499L1.64209 8.65082ZM13.1075 13.8499V22.091L22.3584 16.892V8.65082L13.1075 13.8499Z" />
-                </svg></a>
-            <a href="https://www.instagram.com/chihjialin/" target="_blank" rel="noopener noreferrer"
-                class="icon-link" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24">
-                    <path
-                        d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
-                </svg></a>
-            <a href="https://github.com/CharlesOuO/Blindfolded-Letter-Pairs" target="_blank" rel="noopener noreferrer" class="icon-link"
-                aria-label="GitHub" title="GitHub"><svg viewBox="0 0 24 24">
-                    <path
-                        d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" />
-                </svg></a>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=linchihjia@gmail.com" target="_blank"
-                rel="noopener noreferrer" class="icon-link" aria-label="Email" title="Gmail"><svg viewBox="0 0 24 24">
-                    <path
-                        d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
-                </svg></a>
-        </div>
-        <div class="footer-meta">&copy; 2026 Charles Lin. WCA ID: 2020LINC05</div>
-    </footer>
+    </main>
 
     <script src="built-in-algorithms.js?v=20261005b"></script>
     <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/cube.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/solve.min.js"></script>
-    <script src="lettering.js?v=20261005b"></script>
-    <script src="script.js?v=20261005b"></script>
+    <script src="lettering.js?v=20261124m"></script>
+    <script src="script.js?v=20261124l"></script>
 </body>
 
 </html>

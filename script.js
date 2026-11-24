@@ -22,6 +22,11 @@ const BUFFER_STICKER_NAMES = Object.freeze({
         'DF', 'DR', 'DB', 'DL'
     ])
 });
+const PIECE_KEYS_BY_STICKER = Object.fromEntries(
+    Object.entries(BUFFER_STICKER_NAMES).map(([type, stickers]) => [
+        type, stickers.map(sticker => [...sticker].sort().join(''))
+    ])
+);
 
 const STORAGE_KEY = 'bld_custom_dict_v3';
 const STATUS_KEY = 'bld_status_v1';
@@ -35,7 +40,13 @@ const CORNER_FORMULA_STATUS_KEY = 'bld_formula_corner_status_v1';
 const EDGE_FORMULA_STATUS_KEY = 'bld_formula_edge_status_v1';
 const CORNER_BUFFER_STORAGE_KEY = 'bld_corner_buffer_index_v1';
 const EDGE_BUFFER_STORAGE_KEY = 'bld_edge_buffer_index_v1';
+const MATRIX_BUFFER_FILTER_KEY = 'bld_matrix_hide_buffer_pairs_v1';
+const MATRIX_ORIENTATION_FILTER_KEYS = {
+    corner: 'bld_matrix_hide_twists_v1',
+    edge: 'bld_matrix_hide_flips_v1'
+};
 const LANG_KEY = 'bld_lang_v1';
+const DEFAULT_LANGUAGE = 'en';
 const CHARS_KEY = 'bld_chars_v1';
 const CUSTOM_CHARS_KEY = 'bld_custom_chars_v1';
 const TRAINER_RECORDS_KEY = 'bld_trainer_records_v1';
@@ -52,10 +63,13 @@ const APP_STORAGE_KEYS = [
     EDGE_FORMULA_STATUS_KEY,
     CORNER_BUFFER_STORAGE_KEY,
     EDGE_BUFFER_STORAGE_KEY,
+    MATRIX_BUFFER_FILTER_KEY,
+    ...Object.values(MATRIX_ORIENTATION_FILTER_KEYS),
     LANG_KEY,
     CHARS_KEY,
     CUSTOM_CHARS_KEY,
     LETTERING_KEY,
+    LETTERING_VIEW_KEY,
     TRAINER_RECORDS_KEY
 ];
 
@@ -63,7 +77,7 @@ let currentPair = null;
 let isMemAnswerShown = false;
 let lastMemPair = null;
 let recentMemPairs = [];
-let currentLang = localStorage.getItem(LANG_KEY) || 'zh-TW';
+let currentLang = localStorage.getItem(LANG_KEY) || DEFAULT_LANGUAGE;
 let isMatrixMode = false;
 let currentListViewMode = 'list';
 let currentAlgorithmType = 'corner';
@@ -121,36 +135,19 @@ const TRAINER_ACTION_ICONS = Object.freeze({
 });
 
 // --- [新增] 矩陣模式目前選中的配對 ---
-let currentMatrixPair = null;
-let selectedMatrixPairs = new Set();
+let matrixMarkingGrade = null;
 let appInitCompleted = false;
 let bootTransitionCompleted = false;
 
-// --- 優化工具: 防抖函數 (Debounce) ---
-const debounce = (fn, delay = 500) => {
-    let timeoutId;
-    let pendingArgs;
-    const invoke = () => {
-        clearTimeout(timeoutId);
-        if (!pendingArgs) return;
-        const args = pendingArgs;
-        pendingArgs = null;
-        fn(...args);
-    };
-    const debounced = (...args) => {
-        clearTimeout(timeoutId);
-        pendingArgs = args;
-        timeoutId = setTimeout(invoke, delay);
-    };
-    debounced.flush = invoke;
-    return debounced;
-};
-
-const savePairDataDebounced = debounce((pair, value, contentMode = 'word') => {
+function savePairData(pair, value, contentMode = 'word') {
     const d = getContentDict(contentMode);
     d[pair] = value.trim();
     saveContentDict(contentMode, d);
-}, 500);
+    if (typeof document !== 'undefined' && document.getElementById('list-save-status')) {
+        document.getElementById('list-save-status').textContent = t('list_saved');
+        updateListEditorSummary();
+    }
+}
 
 function readStoredJson(key, fallbackValue) {
     const raw = localStorage.getItem(key);
@@ -212,6 +209,41 @@ const translations = {
 };
 
 Object.assign(translations['zh-TW'], {
+    matrix_familiarity: "熟悉度",
+    matrix_marking_hint: "先選熟悉度，再點格子",
+    matrix_marking_active: "點格子標記「{grade}」",
+    matrix_finish_marking: "完成",
+    matrix_practice_filters: "練習略過",
+    matrix_edit_lettering: "編碼編輯",
+    matrix_table_label: "字母配對表格",
+    matrix_hide_twist: "隱藏 Twist",
+    matrix_hide_flip: "隱藏 Flip",
+    matrix_hide_buffer_pairs: "隱藏 Buffer 配對",
+    settings_edit_lettering: "編輯自訂編碼",
+    settings_export_format: "匯出格式",
+    nav_label: "主要導覽",
+    nav_list: "字母配對",
+    nav_mem: "翻牌",
+    nav_trainer_short: "計時訓練",
+    list_start_code: "開頭代碼",
+    list_save_hint: "輸入後自動儲存於此裝置",
+    list_saved: "已儲存於此裝置",
+    list_search_placeholder: "搜尋這一組的配對或內容",
+    list_filter_all: "全部",
+    list_filter_empty: "未填寫",
+    list_filter_filled: "已填寫",
+    list_progress: "{done} / {total} 已填寫",
+    list_no_results: "沒有符合的配對，試試其他關鍵字或切換為「全部」。",
+    list_keyboard_hint: "單字按 Enter 跳下一格；公式按 Ctrl / ⌘ + Enter。資料僅儲存於目前裝置，請定期備份。",
+    list_word_placeholder: "輸入聯想詞",
+    list_previous_group: "上一組開頭代碼",
+    list_next_group: "下一組開頭代碼",
+    list_search_label: "搜尋目前開頭代碼的配對與內容",
+    list_filter_label: "依填寫狀態篩選",
+    workspace_list_title: "字母配對",
+    workspace_memory_title: "記憶翻牌",
+    workspace_trainer_title: "3-Style 計時訓練",
+    workspace_data_title: "設定",
     nav_trainer: "3-Style 訓練",
     mode_formula: "\u516c\u5f0f\u6a21\u5f0f",
     mode_formula_matrix: "\u516c\u5f0f\u8868\u683c",
@@ -239,14 +271,12 @@ Object.assign(translations['zh-TW'], {
     hint_formula_edit: "\u53ef\u5728\u9019\u88e1\u70ba\u6bcf\u7d44\u5b57\u6bcd\u5c0d\u8f38\u5165\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\uff0c\u7a7a\u767d\u6642\u6703\u986f\u793a\u5167\u5efa BLDDB \u9810\u8a2d\u4ea4\u63db\u5b50\uff0c\u7ffb\u724c\u6a21\u5f0f\u4e5f\u53ef\u4ee5\u5206\u958b\u7df4\u7fd2",
     alert_no_formula_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u516c\u5f0f\u8cc7\u6599\uff01",
     alert_no_algorithm_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\u8cc7\u6599\uff01",
-    alert_select_matrix_cells: "\u8acb\u5148\u9ede\u9078\u77e9\u9663\u4e2d\u7684\u683c\u5b50\uff01",
-    msg_matrix_updated: "\u5df2\u66f4\u65b0\uff01",
     confirm_switch_chars_en: "\u8981\u4e00\u8d77\u5207\u63db\u6210\u82f1\u6587 a-x \u4ee3\u78bc\u55ce\uff1f",
     confirm_switch_chars_zh: "\u8981\u5207\u56de\u6ce8\u97f3\u4ee3\u78bc\u55ce\uff1f",
     trainer_scramble_label: "\u6253\u4e82",
     trainer_scramble_placeholder: "\u6309\u4e0b\u300c\u7522\u751f\u4e0b\u4e00\u7d44\u6253\u4e82\u300d\u958b\u59cb\u3002",
     trainer_scramble_hint: "\u6253\u4e82\u5b8c\u6210\u5f8c\u6309\u4e00\u4e0b\u7a7a\u767d\u9375\u958b\u59cb\u8a08\u6642\uff0c\u4efb\u610f\u9375\u505c\u6b62\u3002",
-    trainer_status_idle: "\u6309\u4e00\u4e0b\u7a7a\u767d\u9375\u958b\u59cb",
+    trainer_status_idle: "點按秒數或按空白鍵開始",
     trainer_status_holding: "\u7e7c\u7e8c\u6309\u4f4f\u2026",
     trainer_status_ready: "\u653e\u958b\u958b\u59cb",
     trainer_status_running: "\u8a08\u6642\u4e2d",
@@ -279,7 +309,7 @@ Object.assign(translations['zh-TW'], {
     settings_corner_buffer: "\u89d2\u584a Buffer",
     settings_edge_buffer: "\u908a\u584a Buffer",
     settings_buffer_option: "{sticker}",
-    settings_formula_suffix: "\uff0c\u4e26\u4f9d\u4e0b\u65b9\u9078\u64c7\u7684 buffer \u986f\u793a placeholder\u3002",
+    settings_formula_suffix: "，並依所選的 Buffer 顯示對應公式。",
     btn_chars_zh: "\u6ce8\u97f3 \u3105~\u3129",
     btn_chars_en: "English a~x",
     btn_chars_custom: "\u81ea\u8a02",
@@ -294,6 +324,41 @@ Object.assign(translations['zh-TW'], {
 });
 
 Object.assign(translations.en, {
+    matrix_familiarity: "Familiarity",
+    matrix_marking_hint: "Choose a grade, then tap cells",
+    matrix_marking_active: "Tap cells to mark {grade}",
+    matrix_finish_marking: "Done",
+    matrix_practice_filters: "Skip in practice",
+    matrix_edit_lettering: "Edit lettering",
+    matrix_table_label: "Letter pair table",
+    matrix_hide_twist: "Hide Twist",
+    matrix_hide_flip: "Hide Flip",
+    matrix_hide_buffer_pairs: "Hide buffer pairs",
+    settings_edit_lettering: "Edit custom lettering",
+    settings_export_format: "Export format",
+    nav_label: "Main navigation",
+    nav_list: "Letter pairs",
+    nav_trainer_short: "Trainer",
+    nav_data: "Settings",
+    list_start_code: "Start code",
+    list_save_hint: "Auto-saved on this device",
+    list_saved: "Saved on this device",
+    list_search_placeholder: "Search pairs or content in this group",
+    list_filter_all: "All entries",
+    list_filter_empty: "Unfilled",
+    list_filter_filled: "Filled",
+    list_progress: "{done} / {total} filled",
+    list_no_results: "No matching pairs. Try another search or select All entries.",
+    list_keyboard_hint: "Words: Enter for the next field. Algorithms: Ctrl / ⌘ + Enter. Data stays on this device; back up regularly.",
+    list_word_placeholder: "Add a memory word",
+    list_previous_group: "Previous start code",
+    list_next_group: "Next start code",
+    list_search_label: "Search pairs and content in the current start-code group",
+    list_filter_label: "Filter by completion",
+    workspace_list_title: "Letter pairs",
+    workspace_memory_title: "Flashcards",
+    workspace_trainer_title: "3-Style trainer",
+    workspace_data_title: "Settings",
     nav_trainer: "3-Style Trainer",
     mode_formula: "Formula Mode",
     mode_formula_matrix: "Formula Table",
@@ -321,14 +386,12 @@ Object.assign(translations.en, {
     hint_formula_edit: "Edit corner or edge algorithms for the selected start code. Empty fields show built-in BLDDB commutators, and Flashcards can study them separately too.",
     alert_no_formula_data: "No formula data in this range!",
     alert_no_algorithm_data: "No corner or edge algorithm data in this range!",
-    alert_select_matrix_cells: "Please select matrix cells first!",
-    msg_matrix_updated: "Updated!",
     confirm_switch_chars_en: "Also switch to English a-x codes?",
     confirm_switch_chars_zh: "Switch back to Zhuyin codes as well?",
     trainer_scramble_label: "Scramble",
     trainer_scramble_placeholder: "Press Next Scramble to begin.",
     trainer_scramble_hint: "Scramble first, press Space to start, and press any key to stop.",
-    trainer_status_idle: "Press Space to start",
+    trainer_status_idle: "Tap the timer or press Space to start",
     trainer_status_holding: "Keep holding...",
     trainer_status_ready: "Release to start",
     trainer_status_running: "Timer running",
@@ -361,7 +424,7 @@ Object.assign(translations.en, {
     settings_corner_buffer: "Corner Buffer",
     settings_edge_buffer: "Edge Buffer",
     settings_buffer_option: "{sticker}",
-    settings_formula_suffix: " and show placeholders for the buffers selected below.",
+    settings_formula_suffix: " and follow the selected buffers.",
     btn_chars_zh: "Zhuyin \u3105~\u3129",
     btn_chars_en: "English a~x",
     btn_chars_custom: "Custom",
@@ -455,7 +518,11 @@ function saveStatusData(pair, dataObject, contentMode = 'word') {
     map[pair] = dataObject;
     localStorage.setItem(getStatusStorageKey(contentMode), JSON.stringify(map));
 }
-function getPairColor(pair, contentMode = 'word') { const data = getPairData(pair, contentMode); return data ? (data.color || 'red') : ''; }
+function getPairColor(pair, contentMode = 'word') {
+    if (isBufferPairHidden(pair, contentMode) || isOrientationPairHidden(pair, contentMode)) return 'gray';
+    const data = getPairData(pair, contentMode);
+    return data ? (data.color || 'red') : '';
+}
 
 function t(key, params = {}) { let str = translations[currentLang][key] || key; Object.keys(params).forEach(k => { str = str.replace(`{${k}}`, params[k]); }); return str; }
 function getDict() { return readStoredJson(STORAGE_KEY, {}); }
@@ -750,7 +817,7 @@ function bootApp() {
 
         try {
             chars = [...CHARS_ZH];
-            currentLang = localStorage.getItem(LANG_KEY) || 'zh-TW';
+            currentLang = localStorage.getItem(LANG_KEY) || DEFAULT_LANGUAGE;
             init();
         } catch (retryError) {
             console.error('App initialization retry failed:', retryError);
@@ -861,6 +928,14 @@ function setupEventListeners() {
 
     document.addEventListener('keydown', function (e) {
         const activeTab = document.querySelector('.view-section.active')?.id;
+        if (e.defaultPrevented || e.isComposing) return;
+        if (activeTab === 'view-list' && isMatrixListView() && matrixMarkingGrade && e.key === 'Escape') {
+            e.preventDefault();
+            setMatrixMarkingGrade(null);
+            return;
+        }
+        if (activeTab !== 'view-trainer' && activeTab !== 'view-memory') return;
+        if (e.target.closest?.('button:focus-visible, a:focus-visible')) return;
         if (activeTab === 'view-trainer' && handleTrainerKeyDown(e)) return;
         if (e.code === 'Space' || e.key === 'Enter') {
             if (isEditableElement(document.activeElement)) return;
@@ -890,7 +965,7 @@ function setupEventListeners() {
     listContainer.addEventListener('input', (e) => {
         if (e.target.matches('.pair-input')) {
             const pair = e.target.dataset.pair;
-            savePairDataDebounced(pair, e.target.value, e.target.dataset.store || 'word');
+            savePairData(pair, e.target.value, e.target.dataset.store || 'word');
         }
     });
 
@@ -898,7 +973,7 @@ function setupEventListeners() {
     formulaContainer.addEventListener('input', (e) => {
         if (e.target.matches('.formula-input')) {
             const pair = e.target.dataset.pair;
-            savePairDataDebounced(pair, e.target.value, e.target.dataset.store || getCurrentListContentMode());
+            savePairData(pair, e.target.value, e.target.dataset.store || getCurrentListContentMode());
         }
     });
 
@@ -906,11 +981,11 @@ function setupEventListeners() {
     matrixContainer.addEventListener('input', (e) => {
         if (e.target.matches('.matrix-input')) {
             const pair = e.target.dataset.pair;
-            savePairDataDebounced(pair, e.target.value, e.target.dataset.store || 'word');
+            savePairData(pair, e.target.value, e.target.dataset.store || 'word');
         }
     });
     matrixContainer.addEventListener('focusin', (e) => {
-        if (e.target.matches('.matrix-input')) {
+        if (!matrixMarkingGrade && e.target.matches('.matrix-input')) {
             handleMatrixFocus(e.target);
         }
     });
@@ -919,22 +994,17 @@ function setupEventListeners() {
             handleMatrixBlur();
         }
     });
-    matrixContainer.addEventListener('click', (e) => {
-        if (e.target.matches('.btn-diagonal-check')) {
-            const pair = e.target.dataset.pair;
-            const char = e.target.dataset.char;
-            const contentMode = e.target.dataset.store || 'word';
-            const input = e.target.previousElementSibling;
-            const d = getContentDict(contentMode);
-            d[pair] = char;
-            saveContentDict(contentMode, d);
-            input.value = char;
-        } else if (e.target.matches('.matrix-input')) {
-            const pair = e.target.dataset.pair;
-            // 讓 currentMatrixPair 保持為最後一個點擊的，以便兼容舊邏輯（若有的話）
-            currentMatrixPair = pair;
-            const td = e.target.closest('td');
-            toggleMatrixSelection(pair, td);
+    matrixContainer.addEventListener('pointerdown', (e) => {
+        if (matrixMarkingGrade && e.pointerType === 'mouse' && e.button === 0 && e.target.closest('td')) {
+            e.preventDefault();
+        }
+    });
+    matrixContainer.addEventListener('click', handleMatrixCellClick);
+    matrixContainer.addEventListener('keydown', (e) => {
+        if (!matrixMarkingGrade || e.isComposing || e.repeat || !e.target.matches('.matrix-input')) return;
+        if (e.key === 'Enter' || e.code === 'Space') {
+            e.preventDefault();
+            applyMatrixGrade(e.target, matrixMarkingGrade);
         }
     });
 }
@@ -968,74 +1038,10 @@ function initUI() {
 function setupDynamicUI() {
     const charSelect = document.getElementById('char-select');
     if (charSelect) {
-        charSelect.onchange = renderCurrentListView;
-    }
-
-    const modeRow = document.querySelector('#view-list .control-panel .control-row');
-    const listButton = document.getElementById('btn-mode-list');
-    const matrixButton = document.getElementById('btn-mode-matrix');
-    let wordButton = document.getElementById('btn-mode-content-word');
-    let algorithmButton = document.getElementById('btn-mode-content-formula');
-    let cornerAlgorithmButton = document.getElementById('btn-algorithm-type-corner');
-    let edgeAlgorithmButton = document.getElementById('btn-algorithm-type-edge');
-
-    if (!wordButton) {
-        wordButton = document.createElement('button');
-        wordButton.id = 'btn-mode-content-word';
-        wordButton.className = 'action-btn';
-    }
-    if (!algorithmButton) {
-        algorithmButton = document.createElement('button');
-        algorithmButton.id = 'btn-mode-content-formula';
-        algorithmButton.className = 'action-btn';
-    }
-    if (!cornerAlgorithmButton) {
-        cornerAlgorithmButton = document.createElement('button');
-        cornerAlgorithmButton.id = 'btn-algorithm-type-corner';
-        cornerAlgorithmButton.className = 'action-btn';
-    }
-    if (!edgeAlgorithmButton) {
-        edgeAlgorithmButton = document.createElement('button');
-        edgeAlgorithmButton.id = 'btn-algorithm-type-edge';
-        edgeAlgorithmButton.className = 'action-btn';
-    }
-
-    if (listButton) {
-        listButton.onclick = () => setListLayoutMode('list');
-        listButton.innerHTML = `<span data-i18n="switch_list">${t('switch_list')}</span>`;
-    }
-    if (matrixButton) {
-        matrixButton.onclick = () => setListLayoutMode('matrix');
-        matrixButton.innerHTML = `<span data-i18n="switch_matrix">${t('switch_matrix')}</span>`;
-    }
-
-    wordButton.onclick = () => setListContentMode('word');
-    wordButton.innerHTML = `<span data-i18n="switch_words">${t('switch_words')}</span>`;
-
-    algorithmButton.onclick = () => setListContentMode('formula');
-    algorithmButton.innerHTML = `<span data-i18n="switch_algorithm">${t('switch_algorithm')}</span>`;
-
-    cornerAlgorithmButton.onclick = () => setAlgorithmType('corner');
-    cornerAlgorithmButton.innerHTML = `<span data-i18n="algorithm_corners">${t('algorithm_corners')}</span>`;
-
-    edgeAlgorithmButton.onclick = () => setAlgorithmType('edge');
-    edgeAlgorithmButton.innerHTML = `<span data-i18n="algorithm_edges">${t('algorithm_edges')}</span>`;
-
-    if (modeRow) {
-        modeRow.className = 'list-mode-switcher';
-        modeRow.innerHTML = '';
-        modeRow.appendChild(createListModeGroup('switch_layout', [listButton, matrixButton], 'list-mode-group-layout'));
-        modeRow.appendChild(createListModeGroup('switch_content', [wordButton, algorithmButton], 'list-mode-group-content'));
-
-        let algorithmTypeSwitcher = document.getElementById('algorithm-type-switcher');
-        if (!algorithmTypeSwitcher) {
-            algorithmTypeSwitcher = document.createElement('div');
-            algorithmTypeSwitcher.id = 'algorithm-type-switcher';
-            algorithmTypeSwitcher.className = 'algorithm-type-switcher hidden';
-            modeRow.insertAdjacentElement('afterend', algorithmTypeSwitcher);
-        }
-        algorithmTypeSwitcher.innerHTML = '';
-        algorithmTypeSwitcher.appendChild(createListModeGroup('algorithm_type', [cornerAlgorithmButton, edgeAlgorithmButton], 'algorithm-type-group'));
+        charSelect.onchange = () => {
+            document.getElementById('list-search').value = '';
+            renderCurrentListView();
+        };
     }
 
     const listControls = document.getElementById('list-mode-controls');
@@ -1087,8 +1093,8 @@ function setupDynamicUI() {
         wordButton.id = 'btn-mem-content-word';
         wordButton.className = 'action-btn';
         wordButton.onclick = () => toggleMemoryContentMode('word');
-        wordButton.setAttribute('data-i18n', 'study_word_mode');
-        wordButton.innerText = t('study_word_mode');
+        wordButton.setAttribute('data-i18n', 'switch_words');
+        wordButton.innerText = t('switch_words');
 
         const cornerButton = document.createElement('button');
         cornerButton.id = 'btn-mem-content-corner';
@@ -1157,35 +1163,13 @@ function enhanceMemoryCardLayout() {
     memoryCard.appendChild(stage);
 }
 
-function createListModeGroup(labelKey, buttons, groupId) {
-    const group = document.createElement('div');
-    group.id = groupId;
-    group.className = 'list-mode-group';
-
-    const label = document.createElement('div');
-    label.className = 'list-mode-group-label';
-    label.setAttribute('data-i18n', labelKey);
-    label.innerText = t(labelKey);
-
-    const actions = document.createElement('div');
-    actions.className = 'list-mode-group-actions';
-
-    buttons.filter(Boolean).forEach((button) => {
-        button.classList.add('mode-choice-btn');
-        actions.appendChild(button);
-    });
-
-    group.appendChild(label);
-    group.appendChild(actions);
-    return group;
-}
-
 function setActionButtonActive(button, isActive) {
     if (!button) return;
     button.style.borderColor = '';
     button.style.color = '';
     button.style.backgroundColor = '';
     button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
 }
 
 function normalizeContentModes(contentModes = ['word']) {
@@ -1232,6 +1216,34 @@ function loadAlgorithmBufferSettings() {
 function getAlgorithmBufferIndex(contentMode = 'corner') {
     const type = contentMode === 'edge' ? 'edge' : 'corner';
     return normalizeAlgorithmBufferIndex(currentAlgorithmBufferIndices[type]);
+}
+
+function getContentPieceType(contentMode) {
+    return contentMode === 'edge' || contentMode === 'edge-word' ? 'edge' : 'corner';
+}
+
+function getBufferPiece(contentMode) {
+    const type = getContentPieceType(contentMode);
+    const bufferIndex = getAlgorithmBufferIndex(type);
+    const sticker = BUFFER_STICKER_NAMES[type][bufferIndex];
+    const keys = PIECE_KEYS_BY_STICKER[type];
+    const labels = getPieceChars(type).filter((_, index) => keys[index] === keys[bufferIndex]);
+    return { sticker, labels };
+}
+
+function isBufferPairHidden(pair, contentMode) {
+    if (localStorage.getItem(MATRIX_BUFFER_FILTER_KEY) !== 'true') return false;
+    return getBufferPiece(contentMode).labels.some(letter => pair.startsWith(letter) || pair.endsWith(letter));
+}
+
+function isOrientationPairHidden(pair, contentMode) {
+    const type = getContentPieceType(contentMode);
+    if (localStorage.getItem(MATRIX_ORIENTATION_FILTER_KEYS[type]) !== 'true') return false;
+
+    const [startIndex, endIndex] = getPairIndices(pair, type);
+    if (startIndex < 0 || endIndex < 0 || startIndex === endIndex) return false;
+    const keys = PIECE_KEYS_BY_STICKER[type];
+    return keys[startIndex] === keys[endIndex];
 }
 
 function renderAlgorithmBufferSettings() {
@@ -1558,8 +1570,7 @@ function getAvailablePairContentModes(pair, contentModes = ['word'], options = {
     return normalizeContentModes(contentModes).filter((mode) => {
         const value = getPairContentValue(pair, mode, options);
         if (!value) return false;
-        const status = getPairData(pair, mode);
-        return !(status && status.color === 'gray');
+        return getPairColor(pair, mode) !== 'gray';
     });
 }
 
@@ -1626,6 +1637,68 @@ function renderCurrentListView() {
     else renderList();
 }
 
+function stepListCharacter(direction) {
+    const select = document.getElementById('char-select');
+    const nextIndex = select.selectedIndex + direction;
+    if (nextIndex < 0 || nextIndex >= select.options.length) return;
+    select.selectedIndex = nextIndex;
+    select.onchange();
+}
+
+function matchesListEntry(pair, value, query = '', filter = 'all') {
+    const filled = String(value || '').trim().length > 0;
+    if (filter === 'empty' && filled) return false;
+    if (filter === 'filled' && !filled) return false;
+    const needle = query.trim().toLocaleLowerCase();
+    return !needle || `${pair} ${value || ''}`.toLocaleLowerCase().includes(needle);
+}
+
+function isListEntryVisible(pair, value) {
+    return matchesListEntry(pair, value,
+        document.getElementById('list-search')?.value || '',
+        document.getElementById('list-entry-filter')?.value || 'all');
+}
+
+function updateListEditorSummary() {
+    const select = document.getElementById('char-select');
+    const progress = document.getElementById('list-progress');
+    if (!select || !progress) return;
+    const dict = getContentDict(getCurrentListContentMode());
+    const ends = getPieceChars(currentAlgorithmType).filter(char => char !== select.value);
+    const done = ends.filter(char => String(dict[select.value + char] || '').trim()).length;
+    progress.textContent = t('list_progress', {done, total: ends.length});
+    const meter = document.getElementById('list-progress-meter');
+    meter.max = ends.length || 1;
+    meter.value = done;
+    document.getElementById('list-char-prev').disabled = select.selectedIndex <= 0;
+    document.getElementById('list-char-next').disabled = select.selectedIndex >= select.options.length - 1;
+}
+
+function finishListRender(container) {
+    updateListEditorSummary();
+    document.getElementById('list-empty-state')?.classList.toggle('hidden', container.children.length > 0);
+}
+
+function configurePairInput(input, pair, isFormula = false) {
+    input.setAttribute('aria-label', `${pair.toUpperCase()} — ${t(isFormula ? 'switch_algorithm' : 'switch_words')}`);
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    if (!isFormula) {
+        input.placeholder = t('list_word_placeholder');
+        input.setAttribute('enterkeyhint', 'next');
+    }
+    input.addEventListener('keydown', event => {
+        if (event.isComposing || event.key !== 'Enter') return;
+        if (isFormula && !event.ctrlKey && !event.metaKey) return;
+        const inputs = Array.from(input.closest('.grid-container').querySelectorAll('.pair-input'));
+        const next = inputs[inputs.indexOf(input) + 1];
+        if (next) {
+            event.preventDefault();
+            next.focus();
+        }
+    });
+}
+
 function updateMemoryContentModeButtons() {
     setActionButtonActive(document.getElementById('btn-mem-content-word'), currentMemoryContentModes.includes('word'));
     setActionButtonActive(document.getElementById('btn-mem-content-formula'), currentMemoryContentModes.includes('formula'));
@@ -1644,9 +1717,7 @@ function updateTrainerTypeBadge() {
     const modeLabel = t(currentTrainerAlgorithmType === 'edge' ? 'algorithm_edges' : 'algorithm_corners');
     const displayText = modeLabel;
     const badge = document.getElementById('trainer-type-badge');
-    const statusEl = document.getElementById('trainer-status');
     if (badge) badge.innerText = displayText;
-    if (statusEl) statusEl.innerText = displayText;
 }
 
 function updateAlgorithmTypeButtons() {
@@ -1705,8 +1776,7 @@ function getTrainerCandidatePairs() {
             const pair = start + end;
             if (!getPairContentValue(pair, currentTrainerAlgorithmType)) return;
 
-            const status = getPairData(pair, currentTrainerAlgorithmType);
-            if (status && status.color === 'gray') return;
+            if (getPairColor(pair, currentTrainerAlgorithmType) === 'gray') return;
 
             pairs.push(pair);
         });
@@ -2188,7 +2258,8 @@ function renderTrainerAverages() {
 
 function setTrainerStatus(statusKey = 'trainer_status_idle') {
     currentTrainerStatusKey = statusKey;
-    updateTrainerTypeBadge();
+    const status = document.getElementById('trainer-status');
+    if (status) status.textContent = t(statusKey);
 }
 
 function setTrainerTimerDisplay(value = '0.00') {
@@ -2831,7 +2902,6 @@ function toggleViewMode(mode) {
     const matrixBtn = document.getElementById('btn-mode-matrix');
     const wordBtn = document.getElementById('btn-mode-content-word');
     const formulaBtn = document.getElementById('btn-mode-content-formula');
-    const algorithmTypeSwitcher = document.getElementById('algorithm-type-switcher');
     const listControls = document.getElementById('list-mode-controls');
     const formulaHint = document.getElementById('formula-mode-hint');
     const matrixSettings = document.getElementById('matrix-settings');
@@ -2843,16 +2913,15 @@ function toggleViewMode(mode) {
     const currentLayout = getCurrentListLayoutMode(mode);
     const currentContentGroup = getCurrentListContentGroup(mode);
     const currentContent = getCurrentListContentMode(mode);
+    document.getElementById('list-editor-toolbar')?.classList.toggle('hidden', isMatrixMode);
+    document.getElementById('list-keyboard-hint')?.classList.toggle('hidden', isMatrixMode);
+    document.getElementById('list-empty-state')?.classList.add('hidden');
 
     setActionButtonActive(listBtn, currentLayout === 'list');
     setActionButtonActive(matrixBtn, currentLayout === 'matrix');
     setActionButtonActive(wordBtn, currentContentGroup === 'word');
     setActionButtonActive(formulaBtn, currentContentGroup === 'formula');
     updateAlgorithmTypeButtons();
-
-    if (algorithmTypeSwitcher) {
-        algorithmTypeSwitcher.classList.remove('hidden');
-    }
 
     if (isMatrixListView(mode)) {
         container.classList.add('wide-mode');
@@ -2899,6 +2968,7 @@ function renderList() {
     chars.forEach((endChar) => {
         if (startChar === endChar) return;
         const pair = startChar + endChar;
+        if (!isListEntryVisible(pair, dict[pair])) return;
         const div = document.createElement('div'); div.className = 'pair-item';
         div.innerHTML = `<div class="pair-label">${pair.toUpperCase()}</div>`;
 
@@ -2906,6 +2976,7 @@ function renderList() {
         input.className = 'pair-input';
         input.dataset.pair = pair;
         input.dataset.store = contentMode;
+        configurePairInput(input, pair);
 
         const stColor = getPairColor(pair, contentMode);
         if (stColor) input.classList.add(`status-${stColor}`);
@@ -2915,6 +2986,7 @@ function renderList() {
         fragment.appendChild(div);
     });
     container.appendChild(fragment);
+    finishListRender(container);
 }
 
 function renderFormulaList() {
@@ -2929,6 +3001,7 @@ function renderFormulaList() {
     chars.forEach((endChar) => {
         if (startChar === endChar) return;
         const pair = startChar + endChar;
+        if (!isListEntryVisible(pair, formulaDict[pair])) return;
         const div = document.createElement('div');
         div.className = 'pair-item pair-item-formula';
         div.innerHTML = `<div class="pair-label">${pair.toUpperCase()}</div>`;
@@ -2939,6 +3012,7 @@ function renderFormulaList() {
         textarea.dataset.store = contentMode;
         textarea.rows = 3;
         textarea.placeholder = getAlgorithmPlaceholder(pair, contentMode);
+        configurePairInput(textarea, pair, true);
 
         const stColor = getPairColor(pair, contentMode);
         if (stColor) textarea.classList.add(`status-${stColor}`);
@@ -2949,17 +3023,50 @@ function renderFormulaList() {
     });
 
     container.appendChild(fragment);
+    finishListRender(container);
+}
+
+function toggleMatrixBufferPairs() {
+    const hidden = localStorage.getItem(MATRIX_BUFFER_FILTER_KEY) === 'true';
+    localStorage.setItem(MATRIX_BUFFER_FILTER_KEY, String(!hidden));
+    resetTrainerScrambleNavigation();
+    renderCurrentListView();
+}
+
+function toggleMatrixOrientationPairs() {
+    const type = getContentPieceType(getCurrentListContentMode());
+    const key = MATRIX_ORIENTATION_FILTER_KEYS[type];
+    localStorage.setItem(key, String(localStorage.getItem(key) !== 'true'));
+    resetTrainerScrambleNavigation();
+    renderCurrentListView();
 }
 
 function renderMatrix(contentMode = 'word') {
     const chars = getPieceChars(contentMode);
+    const type = getContentPieceType(contentMode);
+    const orientationButton = document.getElementById('matrix-orientation-filter-btn');
+    if (orientationButton) {
+        orientationButton.textContent = t(type === 'corner' ? 'matrix_hide_twist' : 'matrix_hide_flip');
+        setActionButtonActive(orientationButton, localStorage.getItem(MATRIX_ORIENTATION_FILTER_KEYS[type]) === 'true');
+    }
+    const hideBuffer = localStorage.getItem(MATRIX_BUFFER_FILTER_KEY) === 'true';
+    const bufferButton = document.getElementById('matrix-buffer-filter-btn');
+    setActionButtonActive(bufferButton, hideBuffer);
+    if (bufferButton) {
+        const { sticker, labels } = getBufferPiece(contentMode);
+        bufferButton.title = `${sticker} · ${labels.map(label => label.toUpperCase()).join(' / ')}`;
+    }
+
+    const readOnly = document.getElementById('matrix-edit-toggle')?.checked === false ? ' readonly' : '';
     const table = document.getElementById('full-matrix');
     const matrixWrapper = document.getElementById('matrix-area');
     const dict = getContentDict(contentMode);
-    if (matrixWrapper) matrixWrapper.classList.toggle('formula-matrix-mode', isAlgorithmContentMode(contentMode));
+    if (matrixWrapper) {
+        matrixWrapper.classList.toggle('formula-matrix-mode', isAlgorithmContentMode(contentMode));
+        matrixWrapper.classList.remove('is-marking');
+    }
+    matrixMarkingGrade = null;
 
-    // [修改] 渲染時清空選取
-    selectedMatrixPairs.clear();
     updateMatrixToolbar();
 
     const rows = [];
@@ -2974,29 +3081,30 @@ function renderMatrix(contentMode = 'word') {
         .replace(/>/g, '&gt;');
 
     let headerHtml = '<thead><tr><th></th>';
-    chars.forEach((c, index) => {
-        headerHtml += `<th><input value="${c.toUpperCase()}" onchange="updateGlobalChar(${index}, this.value)" class="header-input char-idx-${index}"></th>`;
+    chars.forEach((char, index) => {
+        headerHtml += `<th><input value="${escapeHtmlAttribute(char.toUpperCase())}" onchange="updateGlobalChar(${index}, this.value)" class="header-input char-idx-${index}"${readOnly}></th>`;
     });
     headerHtml += '</tr></thead><tbody>';
     rows.push(headerHtml);
 
     chars.forEach((rowChar, rowIndex) => {
-        let rowHtml = `<tr><th><input value="${rowChar.toUpperCase()}" onchange="updateGlobalChar(${rowIndex}, this.value)" class="header-input char-idx-${rowIndex}"></th>`;
-        chars.forEach((colChar, colIndex) => {
+        let rowHtml = `<tr><th><input value="${escapeHtmlAttribute(rowChar.toUpperCase())}" onchange="updateGlobalChar(${rowIndex}, this.value)" class="header-input char-idx-${rowIndex}"${readOnly}></th>`;
+        chars.forEach(colChar => {
             const pair = rowChar + colChar;
             const stColor = getPairColor(pair, contentMode);
             let cellClass = stColor ? `status-${stColor}` : '';
             const val = dict[pair] || '';
             const placeholder = isAlgorithmContentMode(contentMode) ? getAlgorithmPlaceholder(pair, contentMode) : '';
+            const accessibleLabel = escapeHtmlAttribute(pair.toUpperCase());
             const inputMarkup = isAlgorithmContentMode(contentMode)
-                ? `<textarea class="matrix-input" data-pair="${escapeHtmlAttribute(pair)}" data-store="${escapeHtmlAttribute(contentMode)}" placeholder="${escapeHtmlAttribute(placeholder)}" rows="3">${escapeHtmlText(val)}</textarea>`
-                : `<input class="matrix-input" value="${escapeHtmlAttribute(val)}" data-pair="${escapeHtmlAttribute(pair)}" data-store="${escapeHtmlAttribute(contentMode)}">`;
+                ? `<textarea class="matrix-input" data-pair="${escapeHtmlAttribute(pair)}" data-store="${escapeHtmlAttribute(contentMode)}" aria-label="${accessibleLabel}" placeholder="${escapeHtmlAttribute(placeholder)}" rows="3"${readOnly}>${escapeHtmlText(val)}</textarea>`
+                : `<input class="matrix-input" value="${escapeHtmlAttribute(val)}" data-pair="${escapeHtmlAttribute(pair)}" data-store="${escapeHtmlAttribute(contentMode)}" aria-label="${accessibleLabel}"${readOnly}>`;
 
             if (rowChar === colChar) {
                 rowHtml += `<td class="cell-diagonal ${cellClass}">
                     <div class="diagonal-wrapper">
                         ${inputMarkup}
-                        <button class="btn-diagonal-check" data-pair="${pair}" data-char="${rowChar}" data-store="${contentMode}">${t('btn_same')}</button>
+                        <button class="btn-diagonal-check" data-pair="${escapeHtmlAttribute(pair)}" data-char="${escapeHtmlAttribute(rowChar)}" data-store="${contentMode}">${t('btn_same')}</button>
                     </div>
                 </td>`;
             } else {
@@ -3023,84 +3131,77 @@ function handleMatrixFocus(el) {
     for (let r = 0; r < table.rows.length; r++) { if (table.rows[r] && table.rows[r].cells[colIndex]) { table.rows[r].cells[colIndex].classList.add('highlight-guide'); } }
 }
 
-// --- [新增] 切換選取狀態 ---
-function toggleMatrixSelection(pair, cellElement) {
-    if (selectedMatrixPairs.has(pair)) {
-        selectedMatrixPairs.delete(pair);
-        cellElement.classList.remove('is-selected');
-    } else {
-        selectedMatrixPairs.add(pair);
-        cellElement.classList.add('is-selected');
-    }
-    updateMatrixToolbar();
-}
 
 function updateMatrixToolbar() {
     const label = document.getElementById('active-pair-label');
-    if (label) {
-        if (selectedMatrixPairs.size > 0) {
-            label.innerText = t('sel_count', { n: selectedMatrixPairs.size });
-        } else {
-            label.innerText = "";
-        }
+    const gradeActions = document.getElementById('matrix-grade-actions');
+    const gradeButtons = gradeActions?.querySelectorAll('[data-grade]') || [];
+    for (const button of gradeButtons) {
+        button.setAttribute('aria-pressed', String(button.dataset.grade === matrixMarkingGrade));
+    }
+    document.getElementById('matrix-marking-done')?.classList.toggle('hidden', !matrixMarkingGrade);
+
+    if (!label) return;
+    if (matrixMarkingGrade) {
+        const button = Array.from(gradeButtons).find(option => option.dataset.grade === matrixMarkingGrade);
+        label.textContent = t('matrix_marking_active', { grade: t(button?.dataset.i18n || 'matrix_familiarity') });
+    } else {
+        label.textContent = t('matrix_marking_hint');
     }
 }
 
 function handleMatrixBlur() {
     document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
-    // 不隱藏工具列，方便連續操作
 }
 
-// --- [新增] 手動設定狀態功能 (含隱藏) ---
-window.setMatrixStatus = function (statusType) {
-    if (selectedMatrixPairs.size === 0) {
-        alert(t('alert_select_matrix_cells'));
-        return;
+function handleMatrixCellClick(event) {
+    if (!matrixMarkingGrade && !event.target.matches('.btn-diagonal-check')) return;
+
+    const cell = event.target.closest('td');
+    const input = cell?.querySelector('.matrix-input');
+    if (!input) return;
+
+    if (matrixMarkingGrade) {
+        event.preventDefault();
+        applyMatrixGrade(input, matrixMarkingGrade);
+    } else if (event.target.matches('.btn-diagonal-check')) {
+        if (input.readOnly) return;
+        input.value = event.target.dataset.char;
+        savePairData(input.dataset.pair, input.value, input.dataset.store || 'word');
     }
+}
 
-    const contentMode = getCurrentListContentMode();
-    const pairsToUpdate = Array.from(selectedMatrixPairs);
-
-    pairsToUpdate.forEach(pair => {
-        let newData;
-        if (statusType === 'gray') {
-            // 隱藏狀態
-            newData = { interval: -1, repetition: 0, ef: 2.5, dueDate: 0, color: 'gray' };
-        } else {
-            // 手動評分
-            const grade = statusType === 'green' ? 5 : (statusType === 'yellow' ? 3 : 1);
-            const currentData = getPairData(pair, contentMode);
-            newData = calculateNextReview(currentData, grade);
-        }
-
-        saveStatusData(pair, newData, contentMode);
-
-
-        // 更新畫面颜色
-        const inputEl = document.querySelector(`.matrix-input[data-pair="${pair}"]`);
-        if (inputEl) {
-            const td = inputEl.closest('td');
-            if (td) {
-                td.className = ''; // 清除舊顏色
-                if (newData.color) td.classList.add(`status-${newData.color}`);
-                if (pair[0] === pair[1]) td.classList.add('cell-diagonal');
-                // Clear selection style
-                td.classList.remove('is-selected');
-            }
-        }
-    });
-
-    // 動作完成後，清空選取
-    selectedMatrixPairs.clear();
+function setMatrixMarkingGrade(statusType) {
+    matrixMarkingGrade = statusType;
+    const matrixArea = document.getElementById('matrix-area');
+    if (matrixArea) {
+        matrixArea.classList.toggle('is-marking', Boolean(statusType));
+        const readOnly = Boolean(statusType) || document.getElementById('matrix-edit-toggle')?.checked === false;
+        matrixArea.querySelectorAll('.matrix-input').forEach(input => input.readOnly = readOnly);
+    }
     updateMatrixToolbar();
+}
 
-    // 顯示成功訊息
-    const label = document.getElementById('active-pair-label');
-    if (label) {
-        // label text is already updated by updateMatrixToolbar (to empty/sel:0)
-        label.innerText = t('msg_matrix_updated');
-        setTimeout(() => label.innerText = "", 800);
+function applyMatrixGrade(input, statusType) {
+    const pair = input.dataset.pair;
+    const contentMode = input.dataset.store || getCurrentListContentMode();
+    let nextStatus;
+    if (statusType === 'gray') {
+        nextStatus = { interval: -1, repetition: 0, ef: 2.5, dueDate: 0, color: 'gray' };
+    } else {
+        const grade = { green: 5, yellow: 3, red: 1 }[statusType];
+        nextStatus = calculateNextReview(getPairData(pair, contentMode), grade);
     }
+    saveStatusData(pair, nextStatus, contentMode);
+
+    const cell = input.closest('td');
+    cell.classList.remove('status-green', 'status-yellow', 'status-red', 'status-gray');
+    const color = getPairColor(pair, contentMode);
+    if (color) cell.classList.add('status-' + color);
+}
+
+window.setMatrixStatus = function (statusType) {
+    setMatrixMarkingGrade(matrixMarkingGrade === statusType ? null : statusType);
 };
 
 window.updateGlobalChar = function(index, newValue) {
@@ -3115,6 +3216,7 @@ window.updateGlobalChar = function(index, newValue) {
 };
 
 window.toggleMatrixEdit = function (editable) {
+    if (matrixMarkingGrade) setMatrixMarkingGrade(null);
     document.querySelectorAll('.matrix-input').forEach(inp => inp.readOnly = !editable);
     document.querySelectorAll('.header-input').forEach(inp => inp.readOnly = !editable);
 };;
@@ -3172,11 +3274,14 @@ function applyLanguage() {
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { const key = el.getAttribute('data-i18n-placeholder'); if (translations[currentLang][key]) el.placeholder = translations[currentLang][key]; });
     document.documentElement.lang = currentLang === 'zh-TW' ? 'zh-TW' : 'en';
     document.title = t('page_title');
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+        el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
+    });
     const listSel = document.getElementById('char-select');
     if (listSel) {
         const currentVal = listSel.value;
         listSel.innerHTML = '';
-        chars.forEach(c => { let opt = document.createElement('option'); opt.value = c; opt.innerText = `${c.toUpperCase()}${t('opt_start')}`; listSel.appendChild(opt); });
+        chars.forEach(c => { let opt = document.createElement('option'); opt.value = c; opt.innerText = c.toUpperCase(); listSel.appendChild(opt); });
         if (currentVal && chars.includes(currentVal)) listSel.value = currentVal;
     }
     setMemoryCardFlipped(isMemAnswerShown);
@@ -3313,13 +3418,16 @@ function switchTab(tab) {
     const enterClass = nextIndex >= currentIndex ? 'tab-enter-forward' : 'tab-enter-backward';
 
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active', 'tab-enter-forward', 'tab-enter-backward'));
-    document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(button => {
+        const isCurrent = button.dataset.view === tab;
+        button.classList.toggle('active', isCurrent);
+        if (isCurrent) button.setAttribute('aria-current', 'page');
+        else button.removeAttribute('aria-current');
+    });
     const nextSection = document.getElementById(`view-${tab}`);
     nextSection.classList.add('active');
     void nextSection.offsetWidth;
     nextSection.classList.add(enterClass);
-    const btnIndex = { 'list': 0, 'memory': 1, 'trainer': 2, 'data': 3 };
-    document.querySelectorAll('.nav-btn')[btnIndex[tab]].classList.add('active');
     const container = document.getElementById('main-container');
     if (tab === 'list' && isMatrixListView()) container.classList.add('wide-mode'); else container.classList.remove('wide-mode');
     currentTab = tab;
@@ -3329,6 +3437,7 @@ function switchTab(tab) {
         generateTrainerScramble({ silent: true });
         applyLanguage();
     }
+    window.scrollTo(0, 0);
 }
 
 function resetAllColors(targetColor = 'all') {

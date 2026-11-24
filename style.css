@@ -3669,6 +3669,18 @@ body { padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom)); }
 }
 #view-list a.pair-label:hover,
 #view-list a.pair-label:focus-visible { background: var(--primary-soft); }
+#parity-area { text-align: left; }
+#parity-area h2 { margin: 0; }
+.parity-targets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.parity-targets label { display: grid; gap: 6px; }
+.parity-targets select { width: 100%; }
+#parity-area .formula-input { margin-top: 6px; }
+#parity-reference { overflow-wrap: anywhere; }
 #view-list .pair-input {
     width: 100%;
     min-width: 0;

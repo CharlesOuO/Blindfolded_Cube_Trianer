@@ -62,7 +62,8 @@ const payload = {
   },
   orientationCodes,
   corner: buildCaseMap("corner"),
-  edge: buildCaseMap("edge")
+  edge: buildCaseMap("edge"),
+  parity: JSON.parse(fs.readFileSync(path.join(projectRoot, "parityNightmareSelected.json"), "utf8"))
 };
 
 fs.writeFileSync(

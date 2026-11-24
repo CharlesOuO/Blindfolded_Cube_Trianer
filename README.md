@@ -19,6 +19,12 @@ In `Table`, choose `Good`, `Slow`, `Hard`, or `Hide`, then click the cells you w
 
 Skipped pairs appear gray and stay out of `Flashcards` and the `Trainer`. Turn off the filter to see their previous familiarity marks.
 
+## Parity
+
+In `Letter Pairs`, choose `Parity` under Content. Pick one corner target and one edge target. The case uses both buffers from `Settings`, and the target labels follow your lettering scheme.
+
+The app shows a BLDDB Nightmare reference when the case is in the offline selection. Use the BLDDB link to look up the exact case online. Type your own formula in the editor to save it on this device for that combination of buffers and targets. JSON backups include saved parity formulas.
+
 ## Built-in algorithms
 
 Empty algorithm fields can show a built-in formula from [`BLDDB`](https://blddb.net/). The app loads these references from `built-in-algorithms.js`, so the placeholders also work offline. The built-in notation is `commutator-first`.
@@ -71,6 +77,7 @@ This project uses `GPL-3.0-or-later`. See [LICENSE](./LICENSE) for the full text
 The built-in algorithms come from [BLDDB v2](https://github.com/nbwzx/blddb/tree/v2). The upstream copyright notice credits Zixing Wang, and [BLDDB's documentation](https://docs.blddb.net/en/) specifies GPL version 3 or later.
 
 The repo includes the [corner](./cornerManmade.json) and [edge](./edgeManmade.json) datasets. The [generator](./scripts/generate-built-in-algorithms.js) takes the highest-ranked available commutator for each case and writes it to `built-in-algorithms.js`.
+The same generator bundles [BLDDB's selected Nightmare parity formulas](./parityNightmareSelected.json) for offline reference.
 
 ## Author
 
@@ -100,6 +107,12 @@ Charles Lin · WCA [2020LINC05](https://www.worldcubeassociation.org/persons/202
 - 角塊的 `Hide Twist` 和邊塊的 `Hide Flip` 會略過同一顆實體塊上兩張不同貼紙組成的配對。
 
 略過的配對會在表格中變灰，翻牌和計時訓練都不會抽到。關閉篩選就會顯示原本的熟悉度標記。
+
+## Parity
+
+在「字母配對」的內容選單選 `Parity`，再各選一個角塊 target 和邊塊 target。案例會使用設定裡的兩個 buffer，target 的字母也會跟著你的編碼顯示。
+
+離線資料有收錄的案例會顯示 BLDDB Nightmare 參考公式。點 BLDDB 連結可到網站查同一個案例。輸入自己的公式後，網站會依照當下的 buffer 和 target 組合存到本機。匯出 JSON 時也會備份自訂的 parity 公式。
 
 ## 內建公式
 
@@ -153,6 +166,7 @@ Charles Lin · WCA [2020LINC05](https://www.worldcubeassociation.org/persons/202
 內建公式來自 [BLDDB v2](https://github.com/nbwzx/blddb/tree/v2)。原專案的著作權聲明署名 Zixing Wang。[BLDDB 官方文件](https://docs.blddb.net/en/) 標示其採用 GPL 第 3 版或後續版本授權。
 
 專案附有[角塊資料](./cornerManmade.json)和[邊塊資料](./edgeManmade.json)。[產生腳本](./scripts/generate-built-in-algorithms.js)會從每個案例取出排名最高且可用的交換子，寫入 `built-in-algorithms.js`。
+同一支腳本也會把 [BLDDB Nightmare 選錄的 parity 公式](./parityNightmareSelected.json)包進離線資料。
 
 ## 作者
 

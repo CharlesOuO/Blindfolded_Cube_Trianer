@@ -40,6 +40,7 @@ const CORNER_FORMULA_STATUS_KEY = 'bld_formula_corner_status_v1';
 const EDGE_FORMULA_STATUS_KEY = 'bld_formula_edge_status_v1';
 const CORNER_BUFFER_STORAGE_KEY = 'bld_corner_buffer_index_v1';
 const EDGE_BUFFER_STORAGE_KEY = 'bld_edge_buffer_index_v1';
+const PARITY_FORMULA_STORAGE_KEY = 'bld_parity_formulas_v1';
 const MATRIX_BUFFER_FILTER_KEY = 'bld_matrix_hide_buffer_pairs_v1';
 const MATRIX_ORIENTATION_FILTER_KEYS = {
     corner: 'bld_matrix_hide_twists_v1',
@@ -63,6 +64,7 @@ const APP_STORAGE_KEYS = [
     EDGE_FORMULA_STATUS_KEY,
     CORNER_BUFFER_STORAGE_KEY,
     EDGE_BUFFER_STORAGE_KEY,
+    PARITY_FORMULA_STORAGE_KEY,
     MATRIX_BUFFER_FILTER_KEY,
     ...Object.values(MATRIX_ORIENTATION_FILTER_KEYS),
     LANG_KEY,
@@ -270,6 +272,14 @@ Object.assign(translations['zh-TW'], {
     ph_algorithm: "\u8f38\u5165\u516c\u5f0f",
     hint_formula_edit: "\u53ef\u5728\u9019\u88e1\u70ba\u6bcf\u7d44\u5b57\u6bcd\u5c0d\u8f38\u5165\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\uff0c\u7a7a\u767d\u6642\u6703\u986f\u793a\u5167\u5efa BLDDB \u9810\u8a2d\u4ea4\u63db\u5b50\uff0c\u7ffb\u724c\u6a21\u5f0f\u4e5f\u53ef\u4ee5\u5206\u958b\u7df4\u7fd2",
     blddb_pair_lookup: "\u5728 BLDDB \u67e5\u8a62 {pair}\uff08\u65b0\u5206\u9801\uff09",
+    parity_title: "Parity",
+    parity_corner_target: "\u89d2\u584a target",
+    parity_edge_target: "\u908a\u584a target",
+    parity_buffers: "\u89d2\u584a buffer {corner}\uff0c\u908a\u584a buffer {edge}",
+    parity_custom: "\u81ea\u8a02\u516c\u5f0f",
+    parity_reference: "BLDDB Nightmare \u53c3\u8003\u516c\u5f0f\uff1a{algorithm}",
+    parity_no_reference: "\u9019\u500b\u6848\u4f8b\u6c92\u6709\u96e2\u7dda\u53c3\u8003\u516c\u5f0f\uff0c\u53ef\u958b\u555f BLDDB \u67e5\u8a62\u3002",
+    parity_lookup: "\u5728 BLDDB \u67e5\u8a62\uff08\u65b0\u5206\u9801\uff09",
     confirm_restore_backup: "\u9084\u539f\u5099\u4efd\u6703\u53d6\u4ee3\u76ee\u524d\u7684\u5b57\u8a5e\u3001\u516c\u5f0f\u3001\u8907\u7fd2\u9032\u5ea6\u548c\u8a08\u6642\u7d00\u9304\u3002\u820a\u7248\u5099\u4efd\u672a\u5305\u542b\u7684\u8cc7\u6599\u985e\u5225\u6703\u6e05\u7a7a\u3002\u78ba\u5b9a\u9084\u539f\uff1f",
     alert_no_formula_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u516c\u5f0f\u8cc7\u6599\uff01",
     alert_no_algorithm_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\u8cc7\u6599\uff01",
@@ -387,6 +397,14 @@ Object.assign(translations.en, {
     ph_algorithm: "Enter algorithm",
     hint_formula_edit: "Edit corner or edge algorithms for the selected start code. Empty fields show built-in BLDDB commutators, and Flashcards can study them separately too.",
     blddb_pair_lookup: "Look up {pair} on BLDDB (new tab)",
+    parity_title: "Parity",
+    parity_corner_target: "Corner target",
+    parity_edge_target: "Edge target",
+    parity_buffers: "Corner buffer {corner} · Edge buffer {edge}",
+    parity_custom: "Your algorithm",
+    parity_reference: "BLDDB Nightmare reference: {algorithm}",
+    parity_no_reference: "No offline reference for this case. Open BLDDB to look it up.",
+    parity_lookup: "Look up on BLDDB (new tab)",
     confirm_restore_backup: "Restore this backup and replace your words, algorithms, review progress, and timer history? Data categories missing from older backups will be cleared.",
     alert_no_formula_data: "No formula data in this range!",
     alert_no_algorithm_data: "No corner or edge algorithm data in this range!",
@@ -647,6 +665,7 @@ function normalizeBackupPayload(value) {
     const rawDict = letterPairsSection.word ?? value.dict;
     const rawCornerFormulaDict = letterPairsSection.corner ?? value.cornerFormulaDict ?? value.formulaDict;
     const rawEdgeFormulaDict = letterPairsSection.edge ?? value.edgeFormulaDict;
+    const rawParityFormulaDict = letterPairsSection.parity;
     const rawStatus = statusSection.word ?? value.status;
     const rawCornerFormulaStatus = statusSection.corner ?? value.cornerFormulaStatus ?? value.formulaStatus;
     const rawEdgeFormulaStatus = statusSection.edge ?? value.edgeFormulaStatus;
@@ -671,6 +690,7 @@ function normalizeBackupPayload(value) {
             dataMaps.every(map => map == null || isPlainObject(map)) &&
             (rawTrainerRecords == null || Array.isArray(rawTrainerRecords));
     if (!isValidBackup) throw new Error('Invalid or incomplete backup');
+    if (rawParityFormulaDict != null && !isPlainObject(rawParityFormulaDict)) throw new Error('Invalid parity formulas');
 
     if (settingsSection.lettering != null && !sanitizeLetteringState(settingsSection.lettering)) throw new Error('Invalid lettering');
     const normalizedChars = rawChars == null ? null : validateLetteringScheme(rawChars);
@@ -686,6 +706,7 @@ function normalizeBackupPayload(value) {
         edgeWordStatus: sanitizeStatusMap(statusSection.edgeWord ?? value.edgeWordStatus),
         cornerFormulaDict: sanitizeStringMap(rawCornerFormulaDict),
         edgeFormulaDict: sanitizeStringMap(rawEdgeFormulaDict),
+        parityFormulaDict: rawParityFormulaDict == null ? null : sanitizeStringMap(rawParityFormulaDict),
         status: sanitizeStatusMap(rawStatus),
         cornerFormulaStatus: sanitizeStatusMap(rawCornerFormulaStatus),
         edgeFormulaStatus: sanitizeStatusMap(rawEdgeFormulaStatus),
@@ -1343,17 +1364,90 @@ function getBlddbCaseUrl(pair, type) {
     const pieceKeys = indices.map(index => PIECE_KEYS_BY_STICKER[type][index]);
     if (pieceKeys.includes(undefined) || new Set(pieceKeys).size !== 3) return '';
 
+    return getBlddbUrl(type, indices.map(index => getBlddbStickerName(type, index)), 'manmade');
+}
+
+function getBlddbStickerName(type, index) {
     // Keep the sticker face first. BLDDB orders the other faces by U/D, F/B, L/R.
     const faceOrder = 'UDFBLR';
-    const positions = indices.map(index => {
-        const [face, ...otherFaces] = BUFFER_STICKER_NAMES[type][index];
-        otherFaces.sort((a, b) => faceOrder.indexOf(a) - faceOrder.indexOf(b));
-        return face + otherFaces.join('');
-    });
-    const url = new URL(type, 'https://v2.blddb.net/');
+    const [face, ...otherFaces] = BUFFER_STICKER_NAMES[type][index];
+    otherFaces.sort((a, b) => faceOrder.indexOf(a) - faceOrder.indexOf(b));
+    return face + otherFaces.join('');
+}
+
+function getBlddbUrl(page, positions, mode) {
+    const url = new URL(page, 'https://v2.blddb.net/');
     url.searchParams.set('position', positions.join('-'));
-    url.searchParams.set('mode', 'manmade');
+    url.searchParams.set('mode', mode);
     return url.href;
+}
+
+function getParityCase(edgeTarget, cornerTarget) {
+    const pairs = { edge: [getAlgorithmBufferIndex('edge'), edgeTarget], corner: [getAlgorithmBufferIndex('corner'), cornerTarget] };
+    for (const type of ['edge', 'corner']) {
+        const [buffer, target] = pairs[type];
+        const keys = PIECE_KEYS_BY_STICKER[type];
+        if (!Number.isInteger(target) || !keys[target] || keys[buffer] === keys[target]) return null;
+    }
+    const positions = ['edge', 'corner'].flatMap(type => pairs[type].map(index => getBlddbStickerName(type, index)));
+    const key = [...pairs.edge, ...pairs.corner].join('-');
+    const variants = type => (BUILT_IN_ALGORITHMS.orientationCodes?.[type] ?? []).flatMap(codes => {
+        const [buffer, target] = pairs[type].map(index => codes[index]);
+        return [buffer + target, target + buffer];
+    });
+    const selected = BUILT_IN_ALGORITHMS.parity ?? {};
+    const cornerVariants = variants('corner');
+    const reference = variants('edge').flatMap(edge => cornerVariants.map(corner => selected[edge + corner])).find(Boolean);
+    return { key, reference, url: getBlddbUrl('parity', positions, 'nightmare') };
+}
+
+function renderParityEditor() {
+    const buffers = {};
+    for (const type of ['corner', 'edge']) {
+        const select = document.getElementById(`parity-${type}-target`);
+        const previous = select.value;
+        const buffer = getAlgorithmBufferIndex(type);
+        const keys = PIECE_KEYS_BY_STICKER[type];
+        buffers[type] = BUFFER_STICKER_NAMES[type][buffer];
+        select.replaceChildren();
+        getPieceChars(type).forEach((label, index) => {
+            if (keys[index] === keys[buffer]) return;
+            const option = document.createElement('option');
+            option.value = String(index);
+            option.textContent = `${label.toUpperCase()} · ${BUFFER_STICKER_NAMES[type][index]}`;
+            select.appendChild(option);
+        });
+        if (Array.from(select.options).some(option => option.value === previous)) select.value = previous;
+    }
+    document.getElementById('parity-buffers').textContent = t('parity_buffers', buffers);
+    renderParityCase();
+}
+
+function getSelectedParityCase() {
+    const getTarget = type => Number.parseInt(document.getElementById(`parity-${type}-target`).value, 10);
+    return getParityCase(getTarget('edge'), getTarget('corner'));
+}
+
+function renderParityCase() {
+    const selected = getSelectedParityCase();
+    const editor = document.getElementById('parity-formula');
+    const link = document.getElementById('parity-blddb-link');
+    editor.value = selected ? readStoredJson(PARITY_FORMULA_STORAGE_KEY, {})[selected.key] || '' : '';
+    editor.disabled = !selected;
+    if (selected) link.href = selected.url;
+    else link.removeAttribute('href');
+    document.getElementById('parity-reference').textContent = selected?.reference
+        ? t('parity_reference', { algorithm: selected.reference }) : t('parity_no_reference');
+}
+
+function saveParityFormula() {
+    const selected = getSelectedParityCase();
+    if (!selected) return;
+    const dict = readStoredJson(PARITY_FORMULA_STORAGE_KEY, {});
+    const value = document.getElementById('parity-formula').value.trim();
+    if (value) dict[selected.key] = value;
+    else delete dict[selected.key];
+    localStorage.setItem(PARITY_FORMULA_STORAGE_KEY, JSON.stringify(dict));
 }
 
 function getBuiltInAlgorithm(pair, contentMode = 'corner') {
@@ -1634,6 +1728,7 @@ function isFormulaListView(mode = currentListViewMode) {
 }
 
 function getCurrentListContentGroup(mode = currentListViewMode) {
+    if (mode === 'parity') return mode;
     return isFormulaListView(mode) ? 'formula' : 'word';
 }
 
@@ -1646,6 +1741,7 @@ function getCurrentListLayoutMode(mode = currentListViewMode) {
 }
 
 function buildListViewMode(layout = 'list', contentGroup = 'word') {
+    if (contentGroup === 'parity') return contentGroup;
     if (contentGroup === 'formula') {
         return layout === 'matrix' ? 'formula-matrix' : 'formula';
     }
@@ -1667,7 +1763,8 @@ function setAlgorithmType(type) {
 }
 
 function renderCurrentListView() {
-    if (isMatrixListView()) renderMatrix(getCurrentListContentMode());
+    if (currentListViewMode === 'parity') renderParityEditor();
+    else if (isMatrixListView()) renderMatrix(getCurrentListContentMode());
     else if (getCurrentListContentGroup() === 'formula') renderFormulaList();
     else renderList();
 }
@@ -2930,10 +3027,12 @@ function generateTrainerScramble(options = {}) {
 function toggleViewMode(mode) {
     currentListViewMode = mode;
     isMatrixMode = isMatrixListView(mode);
+    const isParity = mode === 'parity';
     const listBtn = document.getElementById('btn-mode-list');
     const matrixBtn = document.getElementById('btn-mode-matrix');
     const wordBtn = document.getElementById('btn-mode-content-word');
     const formulaBtn = document.getElementById('btn-mode-content-formula');
+    const parityBtn = document.getElementById('btn-mode-content-parity');
     const listControls = document.getElementById('list-mode-controls');
     const formulaHint = document.getElementById('formula-mode-hint');
     const matrixSettings = document.getElementById('matrix-settings');
@@ -2944,48 +3043,31 @@ function toggleViewMode(mode) {
     const container = document.getElementById('main-container');
     const currentLayout = getCurrentListLayoutMode(mode);
     const currentContentGroup = getCurrentListContentGroup(mode);
-    const currentContent = getCurrentListContentMode(mode);
-    document.getElementById('list-editor-toolbar')?.classList.toggle('hidden', isMatrixMode);
-    document.getElementById('list-keyboard-hint')?.classList.toggle('hidden', isMatrixMode);
+    const showList = !isMatrixMode && !isParity;
+    const showFormulas = showList && currentContentGroup === 'formula';
+    document.getElementById('list-editor-toolbar')?.classList.toggle('hidden', !showList);
+    document.getElementById('list-keyboard-hint')?.classList.toggle('hidden', !showList);
     document.getElementById('list-empty-state')?.classList.add('hidden');
+    document.getElementById('parity-area').classList.toggle('hidden', !isParity);
+    document.getElementById('list-piece-label').parentElement.classList.toggle('hidden', isParity);
+    document.getElementById('list-layout-label').parentElement.classList.toggle('hidden', isParity);
 
     setActionButtonActive(listBtn, currentLayout === 'list');
     setActionButtonActive(matrixBtn, currentLayout === 'matrix');
     setActionButtonActive(wordBtn, currentContentGroup === 'word');
     setActionButtonActive(formulaBtn, currentContentGroup === 'formula');
+    setActionButtonActive(parityBtn, isParity);
     updateAlgorithmTypeButtons();
 
-    if (isMatrixListView(mode)) {
-        container.classList.add('wide-mode');
-        listControls.classList.add('hidden');
-        formulaHint.classList.add('hidden');
-        matrixSettings.classList.remove('hidden');
-        gridArea.classList.add('hidden');
-        formulaArea.classList.add('hidden');
-        matrixArea.classList.remove('hidden');
-        if (matrixFooter) matrixFooter.classList.remove('hidden');
-        renderMatrix(currentContent);
-    } else if (currentContentGroup === 'formula') {
-        container.classList.remove('wide-mode');
-        listControls.classList.remove('hidden');
-        formulaHint.classList.remove('hidden');
-        matrixSettings.classList.add('hidden');
-        gridArea.classList.add('hidden');
-        formulaArea.classList.remove('hidden');
-        matrixArea.classList.add('hidden');
-        if (matrixFooter) matrixFooter.classList.add('hidden');
-        renderFormulaList();
-    } else {
-        container.classList.remove('wide-mode');
-        listControls.classList.remove('hidden');
-        formulaHint.classList.add('hidden');
-        matrixSettings.classList.add('hidden');
-        gridArea.classList.remove('hidden');
-        formulaArea.classList.add('hidden');
-        matrixArea.classList.add('hidden');
-        if (matrixFooter) matrixFooter.classList.add('hidden');
-        renderList();
-    }
+    container.classList.toggle('wide-mode', isMatrixMode);
+    listControls.classList.toggle('hidden', !showList);
+    formulaHint.classList.toggle('hidden', !showFormulas);
+    matrixSettings.classList.toggle('hidden', !isMatrixMode);
+    gridArea.classList.toggle('hidden', !showList || showFormulas);
+    formulaArea.classList.toggle('hidden', !showFormulas);
+    matrixArea.classList.toggle('hidden', !isMatrixMode);
+    matrixFooter?.classList.toggle('hidden', !isMatrixMode);
+    renderCurrentListView();
 }
 
 function renderList() {
@@ -3709,7 +3791,8 @@ async function exportData() {
                     word: dict,
                     edgeWord: edgeWordDict,
                     corner: cornerFormulaDict,
-                    edge: edgeFormulaDict
+                    edge: edgeFormulaDict,
+                    parity: readStoredJson(PARITY_FORMULA_STORAGE_KEY, {})
                 },
                 status: {
                     word: statusMap,
@@ -3791,6 +3874,7 @@ function restoreBackup(backup) {
         [EDGE_FORMULA_STATUS_KEY]: backup.edgeFormulaStatus,
         [TRAINER_RECORDS_KEY]: backup.trainerRecords
     };
+    if (backup.parityFormulaDict != null) data[PARITY_FORMULA_STORAGE_KEY] = backup.parityFormulaDict;
     if (backup.lettering || backup.chars) {
         data[LETTERING_KEY] = backup.lettering;
         data[CHARS_KEY] = backup.lettering?.active.corner ?? backup.chars;

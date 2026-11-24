@@ -17,7 +17,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20261124n">
+    <link rel="stylesheet" href="style.css?v=20261125a">
 </head>
 
 <body class="app-booting" onload="bootApp()">
@@ -75,6 +75,7 @@
                         <div class="list-mode-group-actions">
                             <button type="button" id="btn-mode-content-word" class="action-btn mode-choice-btn" onclick="setListContentMode('word')" data-i18n="switch_words"></button>
                             <button type="button" id="btn-mode-content-formula" class="action-btn mode-choice-btn" onclick="setListContentMode('formula')" data-i18n="switch_algorithm"></button>
+                            <button type="button" id="btn-mode-content-parity" class="action-btn mode-choice-btn" onclick="setListContentMode('parity')" data-i18n="parity_title"></button>
                         </div>
                     </div>
                     <div class="list-mode-group layout-options" role="group" aria-labelledby="list-layout-label">
@@ -96,6 +97,24 @@
                 </div>
 
             </div>
+
+            <section id="parity-area" class="control-panel hidden" aria-labelledby="parity-heading">
+                <h2 id="parity-heading" data-i18n="parity_title"></h2>
+                <p id="parity-buffers"></p>
+                <div class="parity-targets">
+                    <label><span data-i18n="parity_corner_target"></span>
+                        <select id="parity-corner-target" class="form-select" onchange="renderParityCase()"></select>
+                    </label>
+                    <label><span data-i18n="parity_edge_target"></span>
+                        <select id="parity-edge-target" class="form-select" onchange="renderParityCase()"></select>
+                    </label>
+                </div>
+                <label for="parity-formula" data-i18n="parity_custom"></label>
+                <textarea id="parity-formula" class="pair-input formula-input" rows="3"
+                    spellcheck="false" autocapitalize="off" autocomplete="off" oninput="saveParityFormula()"></textarea>
+                <p id="parity-reference"></p>
+                <a id="parity-blddb-link" target="_blank" rel="noopener noreferrer" data-i18n="parity_lookup"></a>
+            </section>
 
             <div id="list-editor-toolbar" class="list-editor-toolbar">
                 <div class="list-editor-summary">
@@ -468,11 +487,11 @@
         </div>
     </main>
 
-    <script src="built-in-algorithms.js?v=20261005b"></script>
+    <script src="built-in-algorithms.js?v=20261125a"></script>
     <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/cube.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/solve.min.js"></script>
     <script src="lettering.js?v=20261124o"></script>
-    <script src="script.js?v=20261124o"></script>
+    <script src="script.js?v=20261125a"></script>
 </body>
 
 </html>

@@ -1,7 +1,7 @@
 # 3BLD(3 style & letter pairs) practice
 
 A bilingual browser-based practice tool for 3BLD.
-It helps you manage letter pair words, review 3-style algorithms, and train recall with flashcards and typing tests.
+It helps you manage letter pair words, review 3-style algorithms, and practice with flashcards and a timed trainer.
 
 [Traditional Chinese / 繁體中文](#繁體中文)
 
@@ -19,7 +19,6 @@ You can use it to:
 - review `Edges` algorithms
 - train with `3-Style Trainer` (scramble + timer + history)
 - practice with flashcards
-- train recall speed with typing tests
 - switch lettering codes between `Zhuyin`, `English`, and `Custom`
 - export and import your own local data
 
@@ -29,15 +28,13 @@ The app is distributed as a website/PWA. Install it through your browser for sta
 
 ## Default Setup
 
-- Default lettering scheme: `Speffz`
+- Interface language: `English` on first launch
+- Default lettering: `Zhuyin` in Speffz sticker order
 - Built-in algorithm source: [BLDDB](https://blddb.net/)
 - Built-in algorithm format: `commutator-first`
 - Default corner and edge buffers: Speffz `C`
 - Corner and edge buffer stickers can be selected separately in Settings; placeholders update automatically
 - Built-in corner and edge references are stored locally in this project
-
-`Speffz` is only the default.
-If you use a different lettering scheme, you can directly edit the row and column headers in `Table` mode and replace the default scheme with your own.
 
 ## Notation
 
@@ -48,13 +45,17 @@ If you use a different lettering scheme, you can directly edit the row and colum
 
 ## Main Features
 
-### 1. List Input
+### 1. Letter Pairs
 
 - switch between `List` and `Table` layouts
 - switch between `Words` and `Algorithm`
-- edit `Corners` and `Edges` separately
-- directly edit table headers to use your own lettering scheme
-- use familiarity colors for quick review management
+- keep separate word and algorithm entries for `Corners` and `Edges`
+- in `List`, browse by start code, search that group, and filter filled or unfilled entries
+- in `Table`, choose `Good`, `Slow`, `Hard`, or `Hide` first, then click the cells to mark. Press `Done` or `Esc` to return to editing.
+- use `Hide buffer pairs` to skip pairs involving any sticker on the selected buffer piece
+- use `Hide Twist` (corners) or `Hide Flip` (edges) to skip pairs that use two different stickers on the same piece
+
+Skipped pairs appear gray in the table and are excluded from Flashcards and the Trainer. Turning off a skip filter restores the underlying familiarity marks.
 
 ### 2. 3-Style Trainer
 
@@ -84,20 +85,15 @@ Review timing:
 - `Slow`: due again in 6 hours
 - `Good`: scheduled with day-based spacing
 
-### 5. Typing Test
+### 5. Settings, Language, and Lettering Codes
 
-- practice `Words` with a timer
-- filter by start and end ranges
-- test results update the same familiarity and scheduling data
-
-### 6. Settings, Language, and Lettering Codes
-
-- bilingual interface (`Traditional Chinese` / `English`)
-- quick language toggle in `Setting`
+- switch between `English` and `Traditional Chinese` in `Settings`; the app remembers your choice
 - lettering code presets: `Zhuyin ㄅ~ㄩ`, `English a~x`, and `Custom`
 - switching presets does not erase your saved custom scheme
+- open `Settings → Edit custom lettering` and choose the colors for `Up face` and `Face toward you`. The cube net rotates and labels those faces `U` and `F`. Edit the stickers and select `Apply Custom` to save the codes.
+- use `Edit Mode` in the table to edit lettering directly from its headers. When a code changes, saved words and algorithms follow their original physical sticker positions. For example, swapping A and D changes the pair AB at that position to DB.
 
-### 7. Backup and Restore
+### 6. Backup and Restore
 
 - export a full `.json` backup
 - export the word table as `.csv`
@@ -114,12 +110,12 @@ Backup data includes:
 
 ## How To Use
 
-1. Open `List Input`
+1. Open `Letter Pairs`
 2. Fill in your `Words`
 3. Switch to `Algorithm` and enter `Corners` or `Edges`
-4. If needed, switch to `Table` mode and replace the default `Speffz` headers with your own lettering scheme
-5. Use `Flashcards` for review
-6. Use `Typing Test` for speed practice
+4. Set your buffers and lettering in `Settings`
+5. Mark familiarity or skip pairs in `Table`
+6. Use `Flashcards` for recall or `Trainer` for timed practice
 7. Export a `.json` backup regularly
 
 ## Data Storage
@@ -168,7 +164,7 @@ This project is licensed under `GPL-3.0-or-later`.
 ## 3BLD(3 style & letter pairs) practice
 
 這是一個在瀏覽器中使用的 3BLD 練習工具。
-你可以用它管理 letter pairs 字詞、複習 3-style 公式，並透過字卡和打字測驗訓練記憶與反應速度。
+你可以用它管理 letter pairs 字詞、複習 3-style 公式，並透過字卡和計時訓練練習回想與還原速度。
 
 ## Demo
 
@@ -183,7 +179,6 @@ This project is licensed under `GPL-3.0-or-later`.
 - 複習 `Edges` 公式
 - 使用 `3-Style Trainer` 練習（打亂、計時、紀錄）
 - 使用字卡練習
-- 使用打字測驗訓練反應速度
 - 可在 `注音`、`英文`、`自訂` 代碼方案間切換
 - 匯出與匯入自己的本機資料
 
@@ -193,14 +188,12 @@ This project is licensed under `GPL-3.0-or-later`.
 
 ## 預設設定
 
-- 預設 lettering scheme：`Speffz`
+- 首次開啟時的介面語言：`英文`
+- 預設編碼：依 Speffz 貼紙順序排列的`注音`
 - 內建公式來源：[BLDDB](https://blddb.net/)
 - 內建公式顯示格式：`commutator-first`
-- 內建預設 buffer 映射：Speffz `C` buffer
+- 角塊與邊塊預設 Buffer 都對應 Speffz 的 `C`，可在設定分別修改
 - 內建的 corners 和 edges 公式參考已直接存放在專案內
-
-`Speffz` 只是預設值。
-如果你使用自己的 lettering scheme，可以直接在 `Table` 模式修改列與欄標頭，把預設 scheme 改成你自己的。
 
 ## Notation
 
@@ -211,13 +204,17 @@ This project is licensed under `GPL-3.0-or-later`.
 
 ## 主要功能
 
-### 1. List Input
+### 1. 字母配對（Letter Pairs）
 
 - 可切換 `List` 與 `Table` 版面
 - 可切換 `Words` 與 `Algorithm`
-- 可分開編輯 `Corners` 與 `Edges`
-- 可直接修改表頭，改成自己的 lettering scheme
-- 可搭配熟悉度顏色做快速管理
+- 角塊與邊塊各自儲存字詞和公式
+- `List` 可依開頭代碼換組，搜尋組內配對或內容，也可篩選已填寫、未填寫的配對
+- `Table` 先選 `Good`、`Slow`、`Hard` 或 `Hide`，再點格子標記。按「完成」或 `Esc` 回到編輯。
+- `Hide buffer pairs` 會略過涉及 Buffer 那顆實體塊任一貼紙的配對
+- `Hide Twist`（角塊）和 `Hide Flip`（邊塊）會略過同一顆實體塊的兩個不同貼紙所組成的配對
+
+略過的配對在表格中會變灰，翻牌與計時訓練不會抽到。關閉篩選後會恢復原本的熟悉度標記。
 
 ### 2. 3-Style Trainer
 
@@ -247,20 +244,15 @@ This project is licensed under `GPL-3.0-or-later`.
 - `Slow`：6 小時後再次到期
 - `Good`：依天數間隔排程
 
-### 5. Typing Test
+### 5. 設定、語言與代碼方案
 
-- 使用計時器練習 `Words`
-- 可依開頭與結尾範圍過濾
-- 測驗結果會更新同一套熟悉度與排程資料
-
-### 6. 設定、語言與代碼方案
-
-- 介面支援 `繁中` / `English`
-- 可在 `Setting` 快速切換語言
+- 可在 `Settings` 切換 `繁中` 或 `English`，App 會記住你的選擇
 - 代碼方案可在 `注音 ㄅ~ㄩ`、`English a~x`、`自訂` 間切換
 - 切換預設不會清掉已儲存的自訂方案
+- 到「設定 → 編輯自訂編碼」選擇朝上和朝自己的面。展開圖會跟著旋轉，將這兩面標為 `U` 和 `F`。填好貼紙代碼後，按「套用自訂」儲存。
+- 表格也可透過 `Edit Mode` 編輯表頭。字詞和公式跟著原本的實體貼紙位置，所以對調 A 和 D 後，原本 AB 格子的內容會對應到 DB。
 
-### 7. 備份與還原
+### 6. 備份與還原
 
 - 可匯出完整 `.json` 備份
 - 可匯出 `Words` 表格為 `.csv`
@@ -277,12 +269,12 @@ This project is licensed under `GPL-3.0-or-later`.
 
 ## 使用方式
 
-1. 開啟 `List Input`
+1. 開啟「字母配對」
 2. 輸入你的 `Words`
 3. 切到 `Algorithm` 輸入 `Corners` 或 `Edges`
-4. 如果需要，切到 `Table` 模式，把預設 `Speffz` 表頭改成自己的 lettering scheme
-5. 到 `Flashcards` 做複習
-6. 到 `Typing Test` 做速度訓練
+4. 到「設定」選擇 Buffer 和編碼
+5. 在 `Table` 標記熟悉度，或設定要略過的配對
+6. 到「記憶翻牌」複習，或到「計時訓練」練習還原
 7. 定期匯出 `.json` 備份
 
 ## 資料儲存

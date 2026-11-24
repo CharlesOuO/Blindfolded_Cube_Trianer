@@ -214,35 +214,47 @@ vm.runInContext(fs.readFileSync('built-in-algorithms.js', 'utf8'), context);
 run('Object.assign(BUILT_IN_ALGORITHMS, window.BUILT_IN_ALGORITHMS); currentAlgorithmBufferIndices = {edge: 2, corner: 2}');
 const parity = run('getParityCase(0, 0)');
 assert.equal(parity.key, '2-0-2-0');
-assert.equal(parity.url, 'https://v2.blddb.net/parity?position=UF-UB-UFR-UBL&mode=nightmare');
 assert.equal(parity.reference, JSON.parse(fs.readFileSync('parityNightmareSelected.json', 'utf8')).AEJD);
 assert.equal(run('getParityCase(8, 0)'), null);
 assert.equal(run('getParityCase(0, 9)'), null);
-const parityControls = {
-    'parity-edge-target': {value: '0'},
-    'parity-corner-target': {value: '0'},
-    'parity-formula': {value: 'R U'},
-    'parity-blddb-link': {},
-    'parity-reference': {}
-};
-context.document.getElementById = id => parityControls[id] ?? null;
-run('saveParityFormula(); currentAlgorithmBufferIndices.corner = 1; renderParityCase()');
-assert.equal(parityControls['parity-formula'].value, '');
-run('currentAlgorithmBufferIndices.corner = 2; renderParityCase()');
-assert.equal(parityControls['parity-formula'].value, 'R U');
-run("restoreBackup(normalizeBackupPayload({dict:{}})); renderParityCase()");
-assert.equal(parityControls['parity-formula'].value, 'R U');
-run("restoreBackup(normalizeBackupPayload({sections:{letterPairs:{word:{}, parity:{'2-0-2-0':'U R'}}}})); renderParityCase()");
-assert.equal(parityControls['parity-formula'].value, 'U R');
-for (const type of ['corner', 'edge']) {
-    const select = parityControls[`parity-${type}-target`];
-    select.replaceChildren = () => { select.options = []; };
-    select.appendChild = option => { select.options.push(option); };
-}
-parityControls['parity-buffers'] = {};
-context.document.createElement = () => ({});
+const makeNode = () => ({
+    children: [],
+    listeners: {},
+    setAttribute() {},
+    appendChild(child) { this.children.push(child); },
+    append(...items) { this.children.push(...items); },
+    replaceChildren(...items) { this.children = items; },
+    addEventListener(type, listener) { this.listeners[type] = listener; }
+});
+const parityList = makeNode();
+const edgeSettings = makeNode();
+context.document.getElementById = id => ({
+    'parity-area': parityList, 'parity-edge-target-select': edgeSettings
+})[id] ?? null;
+context.document.createElement = makeNode;
+context.document.createDocumentFragment = makeNode;
+const rows = () => parityList.children[0].children;
+const firstFormula = () => rows()[0].children[1];
+run('renderParityEditor(); renderAlgorithmBufferSettings()');
+assert.equal(rows().length, 21);
+assert.equal(rows()[0].children[0].textContent, 'A');
+assert.ok(rows().every(row => row.children[1].placeholder !== 'Enter algorithm'));
+assert.equal(firstFormula().placeholder, run('getParityCase(1, 0).reference'));
+assert.equal(firstFormula().value, '');
+assert.equal(edgeSettings.children.length, 22);
+assert.equal(edgeSettings.children.some(option => ['UF', 'FU'].includes(option.textContent)), false);
+firstFormula().value = 'R U';
+firstFormula().listeners.input();
+run("setParityEdgeTarget('0'); renderParityEditor()");
+assert.equal(firstFormula().value, '');
+assert.equal(firstFormula().placeholder, parity.reference);
+run("restoreBackup(normalizeBackupPayload({dict:{},sections:{settings:{parityEdgeTarget:1}}})); renderParityEditor()");
+assert.equal(firstFormula().value, 'R U');
+firstFormula().value = '';
+firstFormula().listeners.input();
 run('renderParityEditor()');
-assert.equal(parityControls['parity-corner-target'].options.length, 21);
-assert.equal(parityControls['parity-edge-target'].options.length, 22);
-assert.match(parityControls['parity-edge-target'].options[0].textContent, /^X/);
+assert.equal(firstFormula().value, '');
+assert.ok(firstFormula().placeholder);
+run('currentAlgorithmBufferIndices.edge = 12');
+assert.equal(run('getParityCase(getParityEdgeTargetIndex(), 0).key'), '12-0-2-0');
 console.log('Word dictionaries, lettering, matrix controls, and parity formulas passed.');

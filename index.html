@@ -17,7 +17,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="style.css?v=20261125a">
+    <link rel="stylesheet" href="style.css?v=20261125e">
 </head>
 
 <body class="app-booting" onload="bootApp()">
@@ -34,18 +34,26 @@
 
     <header class="app-shell">
         <div class="app-header">
-            <button type="button" class="brand" onclick="switchTab('list')" aria-label="3BLD">
+            <button type="button" class="brand" onclick="switchTab('corner')" aria-label="3BLD">
                 <span class="brand-mark" aria-hidden="true"></span>
                 <span class="brand-name">3BLD</span>
             </button>
         </div>
         <nav class="nav-bar" aria-label="Main navigation" data-i18n-aria-label="nav_label">
             <div class="nav-container">
-                <button type="button" class="nav-btn active" data-view="list" aria-current="page" onclick="switchTab('list')">
-                    <span class="nav-icon icon-pairs" aria-hidden="true"></span><span data-i18n="nav_list"></span>
+                <button type="button" class="nav-btn active" data-view="corner" aria-current="page" onclick="switchTab('corner')">
+                    <span class="nav-icon icon-corners" aria-hidden="true"></span><span data-i18n="algorithm_corners"></span>
                 </button>
-                <button type="button" class="nav-btn" data-view="memory" onclick="switchTab('memory')">
-                    <span class="nav-icon icon-cards" aria-hidden="true"></span><span data-i18n="nav_mem"></span>
+                <button type="button" class="nav-btn" data-view="edge" onclick="switchTab('edge')">
+                    <span class="nav-icon icon-edges" aria-hidden="true"></span><span data-i18n="algorithm_edges"></span>
+                </button>
+                <button type="button" class="nav-btn" data-view="parity" onclick="switchTab('parity')">
+                    <span class="nav-icon icon-parity" aria-hidden="true"></span><span data-i18n="parity_title"></span>
+                </button>
+                <button type="button" class="nav-btn" data-view="memory" onclick="switchTab('memory')" data-i18n-aria-label="nav_mem">
+                    <span class="nav-icon icon-cards" aria-hidden="true"></span>
+                    <span class="nav-label-full" data-i18n="nav_mem"></span>
+                    <span class="nav-label-short" data-i18n="nav_mem_short"></span>
                 </button>
                 <button type="button" class="nav-btn" data-view="trainer" onclick="switchTab('trainer')">
                     <span class="nav-icon icon-timer" aria-hidden="true"></span><span data-i18n="nav_trainer_short"></span>
@@ -60,22 +68,14 @@
     <main id="main-container" class="container">
 
         <div id="view-list" class="view-section active">
-            <div class="workspace-heading"><h1 data-i18n="workspace_list_title"></h1></div>
+            <div class="workspace-heading"><h1 id="piece-heading" data-i18n="algorithm_corners"></h1></div>
             <div class="control-panel list-controls">
                 <div class="list-mode-switcher">
-                    <div class="list-mode-group" role="group" aria-labelledby="list-piece-label">
-                        <span id="list-piece-label" class="list-mode-group-label" data-i18n="algorithm_type"></span>
-                        <div class="list-mode-group-actions">
-                            <button type="button" id="btn-algorithm-type-corner" class="action-btn mode-choice-btn" onclick="setAlgorithmType('corner')" data-i18n="algorithm_corners"></button>
-                            <button type="button" id="btn-algorithm-type-edge" class="action-btn mode-choice-btn" onclick="setAlgorithmType('edge')" data-i18n="algorithm_edges"></button>
-                        </div>
-                    </div>
                     <div class="list-mode-group" role="group" aria-labelledby="list-content-label">
                         <span id="list-content-label" class="list-mode-group-label" data-i18n="switch_content"></span>
                         <div class="list-mode-group-actions">
                             <button type="button" id="btn-mode-content-word" class="action-btn mode-choice-btn" onclick="setListContentMode('word')" data-i18n="switch_words"></button>
                             <button type="button" id="btn-mode-content-formula" class="action-btn mode-choice-btn" onclick="setListContentMode('formula')" data-i18n="switch_algorithm"></button>
-                            <button type="button" id="btn-mode-content-parity" class="action-btn mode-choice-btn" onclick="setListContentMode('parity')" data-i18n="parity_title"></button>
                         </div>
                     </div>
                     <div class="list-mode-group layout-options" role="group" aria-labelledby="list-layout-label">
@@ -97,24 +97,6 @@
                 </div>
 
             </div>
-
-            <section id="parity-area" class="control-panel hidden" aria-labelledby="parity-heading">
-                <h2 id="parity-heading" data-i18n="parity_title"></h2>
-                <p id="parity-buffers"></p>
-                <div class="parity-targets">
-                    <label><span data-i18n="parity_corner_target"></span>
-                        <select id="parity-corner-target" class="form-select" onchange="renderParityCase()"></select>
-                    </label>
-                    <label><span data-i18n="parity_edge_target"></span>
-                        <select id="parity-edge-target" class="form-select" onchange="renderParityCase()"></select>
-                    </label>
-                </div>
-                <label for="parity-formula" data-i18n="parity_custom"></label>
-                <textarea id="parity-formula" class="pair-input formula-input" rows="3"
-                    spellcheck="false" autocapitalize="off" autocomplete="off" oninput="saveParityFormula()"></textarea>
-                <p id="parity-reference"></p>
-                <a id="parity-blddb-link" target="_blank" rel="noopener noreferrer" data-i18n="parity_lookup"></a>
-            </section>
 
             <div id="list-editor-toolbar" class="list-editor-toolbar">
                 <div class="list-editor-summary">
@@ -187,6 +169,11 @@
                 <button class="action-btn matrix-footer-button" onclick="resetAllColors()"
                     data-i18n="btn_reset_color"></button>
             </div>
+        </div>
+
+        <div id="view-parity" class="view-section">
+            <div class="workspace-heading"><h1 data-i18n="parity_title"></h1></div>
+            <div id="parity-area" class="grid-container"></div>
         </div>
 
         <div id="view-memory" class="view-section">
@@ -416,6 +403,14 @@
                                 <span class="select-arrow" aria-hidden="true"></span>
                             </span>
                         </label>
+                        <label class="settings-buffer-field" for="parity-edge-target-select">
+                            <span data-i18n="parity_edge_target"></span>
+                            <span class="styled-select-wrapper">
+                                <select id="parity-edge-target-select" class="styled-select"
+                                    onchange="setParityEdgeTarget(this.value)"></select>
+                                <span class="select-arrow" aria-hidden="true"></span>
+                            </span>
+                        </label>
                     </div>
                     <p class="settings-info-text settings-note">
                         <span data-i18n="settings_formula_prefix"></span><a
@@ -491,7 +486,7 @@
     <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/cube.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/solve.min.js"></script>
     <script src="lettering.js?v=20261124o"></script>
-    <script src="script.js?v=20261125a"></script>
+    <script src="script.js?v=20261125e"></script>
 </body>
 
 </html>

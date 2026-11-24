@@ -8,7 +8,7 @@ You can install the site from your browser as a PWA and use it offline. The nati
 
 ## Letter Pairs
 
-In `Letter Pairs`, choose `Corners` or `Edges`, then switch between `Words` and `Algorithm`. Each piece type has its own word and algorithm entries. In `List`, pick a start code to see that group, search by pair or content, and filter by whether an entry is filled.
+Open `Corners` or `Edges` from the navigation, then switch between `Words` and `Algorithm`. Each piece type has its own word and algorithm entries. In `List`, pick a start code to see that group, search by pair or content, and filter by whether an entry is filled.
 
 In `Algorithm → List`, click a pair to open the matching 3-style case on [BLDDB v2](https://v2.blddb.net/) in a new tab. The link uses your selected buffer and lettering scheme. With Speffz lettering and a `UFR` corner buffer, for example, `AB` opens `UFR → UBL → UBR`.
 
@@ -21,9 +21,9 @@ Skipped pairs appear gray and stay out of `Flashcards` and the `Trainer`. Turn o
 
 ## Parity
 
-In `Letter Pairs`, choose `Parity` under Content. Pick one corner target and one edge target. The case uses both buffers from `Settings`, and the target labels follow your lettering scheme.
+Set `Parity edge target` in `Settings` (default `UR`), then open `Parity`. Each letter in the list is a corner target in your lettering scheme. With edge buffer `UF` and target `UR`, every row swaps `UF ↔ UR` alongside the corner swap.
 
-The app shows a BLDDB Nightmare reference when the case is in the offline selection. Use the BLDDB link to look up the exact case online. Type your own formula in the editor to save it on this device for that combination of buffers and targets. JSON backups include saved parity formulas.
+Empty fields show the matching BLDDB Nightmare formula when the offline selection includes that case. Type your own formula in the row to save it on this device. JSON backups include your formulas and edge target setting.
 
 ## Built-in algorithms
 
@@ -97,7 +97,7 @@ Charles Lin · WCA [2020LINC05](https://www.worldcubeassociation.org/persons/202
 
 ## 字母配對
 
-先選角塊或邊塊，再切到 `Words` 記字詞，或用 `Algorithm` 存公式。角塊和邊塊的字詞及公式各自儲存。在 `List` 選開頭代碼就能換組，也能搜尋組內的字母對或內容，或只看已填、未填的配對。
+從導覽列開啟角塊或邊塊，再切到 `Words` 記字詞，或用 `Algorithm` 存公式。角塊和邊塊的字詞及公式各自儲存。在 `List` 選開頭代碼就能換組，也能搜尋組內的字母對或內容，或只看已填、未填的配對。
 
 在 `Algorithm → List` 點字母對，會依照你選的 buffer 和編碼，在新分頁開啟 [BLDDB v2](https://v2.blddb.net/) 的對應案例。像是用 Speffz 編碼和 `UFR` 角塊 buffer 時，點 `AB` 就會查 `UFR → UBL → UBR`。
 
@@ -110,9 +110,9 @@ Charles Lin · WCA [2020LINC05](https://www.worldcubeassociation.org/persons/202
 
 ## Parity
 
-在「字母配對」的內容選單選 `Parity`，再各選一個角塊 target 和邊塊 target。案例會使用設定裡的兩個 buffer，target 的字母也會跟著你的編碼顯示。
+到「設定」選 Parity 的邊塊 target（預設 `UR`），再開啟 `Parity`。清單上每個字母都是你目前編碼的角塊 target。若邊塊 buffer 是 `UF`、target 是 `UR`，每一列都固定做 `UF ↔ UR`，再搭配該列的角塊交換。
 
-離線資料有收錄的案例會顯示 BLDDB Nightmare 參考公式。點 BLDDB 連結可到網站查同一個案例。輸入自己的公式後，網站會依照當下的 buffer 和 target 組合存到本機。匯出 JSON 時也會備份自訂的 parity 公式。
+有收錄的 BLDDB Nightmare 公式會顯示在空白輸入欄裡。直接在該列輸入自己的公式，網站會自動存到本機。匯出 JSON 時也會備份自訂公式和邊塊 target 設定。
 
 ## 內建公式
 

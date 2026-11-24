@@ -41,6 +41,8 @@ const EDGE_FORMULA_STATUS_KEY = 'bld_formula_edge_status_v1';
 const CORNER_BUFFER_STORAGE_KEY = 'bld_corner_buffer_index_v1';
 const EDGE_BUFFER_STORAGE_KEY = 'bld_edge_buffer_index_v1';
 const PARITY_FORMULA_STORAGE_KEY = 'bld_parity_formulas_v1';
+const PARITY_EDGE_TARGET_KEY = 'bld_parity_edge_target_v1';
+const DEFAULT_PARITY_EDGE_TARGET = BUFFER_STICKER_NAMES.edge.indexOf('UR');
 const MATRIX_BUFFER_FILTER_KEY = 'bld_matrix_hide_buffer_pairs_v1';
 const MATRIX_ORIENTATION_FILTER_KEYS = {
     corner: 'bld_matrix_hide_twists_v1',
@@ -65,6 +67,7 @@ const APP_STORAGE_KEYS = [
     CORNER_BUFFER_STORAGE_KEY,
     EDGE_BUFFER_STORAGE_KEY,
     PARITY_FORMULA_STORAGE_KEY,
+    PARITY_EDGE_TARGET_KEY,
     MATRIX_BUFFER_FILTER_KEY,
     ...Object.values(MATRIX_ORIENTATION_FILTER_KEYS),
     LANG_KEY,
@@ -119,10 +122,10 @@ let trainerPairDrawState = {
     corner: { signature: '', total: 0, drawOrder: [] },
     edge: { signature: '', total: 0, drawOrder: [] }
 };
-let currentTab = 'list';
+let currentTab = 'corner';
 const BUILT_IN_ALGORITHMS = window.BUILT_IN_ALGORITHMS || { corner: {}, edge: {} };
 const MEMORY_REPEAT_GAP = 5;
-const TAB_ORDER = ['list', 'memory', 'trainer', 'data'];
+const TAB_ORDER = ['corner', 'edge', 'parity', 'memory', 'trainer', 'data'];
 const TRAINER_AVERAGE_COUNTS = [5, 12, 50, 100];
 const TRAINER_SCRAMBLE_HISTORY_LIMIT = 200;
 const TRAINER_CUBE_SOLVER_MAX_DEPTH = 22;
@@ -211,6 +214,7 @@ const translations = {
 };
 
 Object.assign(translations['zh-TW'], {
+    nav_mem_short: "\u7ffb\u724c",
     matrix_familiarity: "熟悉度",
     matrix_marking_hint: "先選熟悉度，再點格子",
     matrix_marking_active: "點格子標記「{grade}」",
@@ -273,13 +277,7 @@ Object.assign(translations['zh-TW'], {
     hint_formula_edit: "\u53ef\u5728\u9019\u88e1\u70ba\u6bcf\u7d44\u5b57\u6bcd\u5c0d\u8f38\u5165\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\uff0c\u7a7a\u767d\u6642\u6703\u986f\u793a\u5167\u5efa BLDDB \u9810\u8a2d\u4ea4\u63db\u5b50\uff0c\u7ffb\u724c\u6a21\u5f0f\u4e5f\u53ef\u4ee5\u5206\u958b\u7df4\u7fd2",
     blddb_pair_lookup: "\u5728 BLDDB \u67e5\u8a62 {pair}\uff08\u65b0\u5206\u9801\uff09",
     parity_title: "Parity",
-    parity_corner_target: "\u89d2\u584a target",
-    parity_edge_target: "\u908a\u584a target",
-    parity_buffers: "\u89d2\u584a buffer {corner}\uff0c\u908a\u584a buffer {edge}",
-    parity_custom: "\u81ea\u8a02\u516c\u5f0f",
-    parity_reference: "BLDDB Nightmare \u53c3\u8003\u516c\u5f0f\uff1a{algorithm}",
-    parity_no_reference: "\u9019\u500b\u6848\u4f8b\u6c92\u6709\u96e2\u7dda\u53c3\u8003\u516c\u5f0f\uff0c\u53ef\u958b\u555f BLDDB \u67e5\u8a62\u3002",
-    parity_lookup: "\u5728 BLDDB \u67e5\u8a62\uff08\u65b0\u5206\u9801\uff09",
+    parity_edge_target: "Parity \u908a\u584a target",
     confirm_restore_backup: "\u9084\u539f\u5099\u4efd\u6703\u53d6\u4ee3\u76ee\u524d\u7684\u5b57\u8a5e\u3001\u516c\u5f0f\u3001\u8907\u7fd2\u9032\u5ea6\u548c\u8a08\u6642\u7d00\u9304\u3002\u820a\u7248\u5099\u4efd\u672a\u5305\u542b\u7684\u8cc7\u6599\u985e\u5225\u6703\u6e05\u7a7a\u3002\u78ba\u5b9a\u9084\u539f\uff1f",
     alert_no_formula_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u516c\u5f0f\u8cc7\u6599\uff01",
     alert_no_algorithm_data: "\u76ee\u524d\u9078\u53d6\u7bc4\u570d\u6c92\u6709\u89d2\u584a\u6216\u908a\u584a\u516c\u5f0f\u8cc7\u6599\uff01",
@@ -336,6 +334,7 @@ Object.assign(translations['zh-TW'], {
 });
 
 Object.assign(translations.en, {
+    nav_mem_short: "Cards",
     matrix_familiarity: "Familiarity",
     matrix_marking_hint: "Choose a grade, then tap cells",
     matrix_marking_active: "Tap cells to mark {grade}",
@@ -398,13 +397,7 @@ Object.assign(translations.en, {
     hint_formula_edit: "Edit corner or edge algorithms for the selected start code. Empty fields show built-in BLDDB commutators, and Flashcards can study them separately too.",
     blddb_pair_lookup: "Look up {pair} on BLDDB (new tab)",
     parity_title: "Parity",
-    parity_corner_target: "Corner target",
-    parity_edge_target: "Edge target",
-    parity_buffers: "Corner buffer {corner} · Edge buffer {edge}",
-    parity_custom: "Your algorithm",
-    parity_reference: "BLDDB Nightmare reference: {algorithm}",
-    parity_no_reference: "No offline reference for this case. Open BLDDB to look it up.",
-    parity_lookup: "Look up on BLDDB (new tab)",
+    parity_edge_target: "Parity edge target",
     confirm_restore_backup: "Restore this backup and replace your words, algorithms, review progress, and timer history? Data categories missing from older backups will be cleared.",
     alert_no_formula_data: "No formula data in this range!",
     alert_no_algorithm_data: "No corner or edge algorithm data in this range!",
@@ -673,6 +666,10 @@ function normalizeBackupPayload(value) {
     const rawChars = settingsSection.chars ?? value.chars;
     const rawLang = settingsSection.lang ?? value.lang;
     const rawAlgorithmBuffers = settingsSection.algorithmBuffers ?? value.algorithmBuffers;
+    const parityEdgeTarget = settingsSection.parityEdgeTarget ?? null;
+    if (parityEdgeTarget !== null && (!Number.isInteger(parityEdgeTarget) || !BUFFER_STICKER_NAMES.edge[parityEdgeTarget])) {
+        throw new Error('Invalid parity edge target');
+    }
 
     const dataMaps = [
         letterPairsSection.edgeWord ?? value.edgeWordDict,
@@ -714,7 +711,8 @@ function normalizeBackupPayload(value) {
         lettering: settingsSection.lettering == null ? null : sanitizeLetteringState(settingsSection.lettering),
         chars: normalizedChars,
         lang: normalizedLang,
-        algorithmBuffers: normalizedAlgorithmBuffers
+        algorithmBuffers: normalizedAlgorithmBuffers,
+        parityEdgeTarget
     };
 }
 
@@ -830,7 +828,6 @@ function init() {
     syncLatestTrainerRecordId();
     resetTrainerScrambleNavigation();
     migrateLegacyFormulaData();
-    currentTab = document.querySelector('.view-section.active')?.id?.replace('view-', '') || 'list';
     initUI(); setupDynamicUI(); enhanceMemoryCardLayout(); applyLanguage(); updateLayoutMode();
     setupEventListeners();
     updateMemoryContentModeButtons();
@@ -1299,6 +1296,36 @@ function renderAlgorithmBufferSettings() {
             select.appendChild(option);
         });
     });
+    const paritySelect = document.getElementById('parity-edge-target-select');
+    if (!paritySelect) return;
+    const keys = PIECE_KEYS_BY_STICKER.edge;
+    const bufferKey = keys[getAlgorithmBufferIndex('edge')];
+    const target = getParityEdgeTargetIndex();
+    paritySelect.replaceChildren();
+    BUFFER_STICKER_NAMES.edge.forEach((sticker, index) => {
+        if (keys[index] === bufferKey) return;
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = sticker;
+        option.selected = index === target;
+        paritySelect.appendChild(option);
+    });
+}
+
+function getParityEdgeTargetIndex() {
+    const keys = PIECE_KEYS_BY_STICKER.edge;
+    const bufferKey = keys[getAlgorithmBufferIndex('edge')];
+    const target = readStoredJson(PARITY_EDGE_TARGET_KEY, DEFAULT_PARITY_EDGE_TARGET);
+    if (Number.isInteger(target) && keys[target] && keys[target] !== bufferKey) return target;
+    if (keys[DEFAULT_PARITY_EDGE_TARGET] !== bufferKey) return DEFAULT_PARITY_EDGE_TARGET;
+    return keys.findIndex(key => key !== bufferKey);
+}
+
+function setParityEdgeTarget(value) {
+    const target = Number.parseInt(value, 10);
+    const keys = PIECE_KEYS_BY_STICKER.edge;
+    if (!keys[target] || keys[target] === keys[getAlgorithmBufferIndex('edge')]) return;
+    localStorage.setItem(PARITY_EDGE_TARGET_KEY, JSON.stringify(target));
 }
 
 function setAlgorithmBuffer(contentMode, value) {
@@ -1389,7 +1416,6 @@ function getParityCase(edgeTarget, cornerTarget) {
         const keys = PIECE_KEYS_BY_STICKER[type];
         if (!Number.isInteger(target) || !keys[target] || keys[buffer] === keys[target]) return null;
     }
-    const positions = ['edge', 'corner'].flatMap(type => pairs[type].map(index => getBlddbStickerName(type, index)));
     const key = [...pairs.edge, ...pairs.corner].join('-');
     const variants = type => (BUILT_IN_ALGORITHMS.orientationCodes?.[type] ?? []).flatMap(codes => {
         const [buffer, target] = pairs[type].map(index => codes[index]);
@@ -1398,55 +1424,30 @@ function getParityCase(edgeTarget, cornerTarget) {
     const selected = BUILT_IN_ALGORITHMS.parity ?? {};
     const cornerVariants = variants('corner');
     const reference = variants('edge').flatMap(edge => cornerVariants.map(corner => selected[edge + corner])).find(Boolean);
-    return { key, reference, url: getBlddbUrl('parity', positions, 'nightmare') };
+    return { key, reference };
 }
 
 function renderParityEditor() {
-    const buffers = {};
-    for (const type of ['corner', 'edge']) {
-        const select = document.getElementById(`parity-${type}-target`);
-        const previous = select.value;
-        const buffer = getAlgorithmBufferIndex(type);
-        const keys = PIECE_KEYS_BY_STICKER[type];
-        buffers[type] = BUFFER_STICKER_NAMES[type][buffer];
-        select.replaceChildren();
-        getPieceChars(type).forEach((label, index) => {
-            if (keys[index] === keys[buffer]) return;
-            const option = document.createElement('option');
-            option.value = String(index);
-            option.textContent = `${label.toUpperCase()} · ${BUFFER_STICKER_NAMES[type][index]}`;
-            select.appendChild(option);
-        });
-        if (Array.from(select.options).some(option => option.value === previous)) select.value = previous;
-    }
-    document.getElementById('parity-buffers').textContent = t('parity_buffers', buffers);
-    renderParityCase();
+    const container = document.getElementById('parity-area');
+    const edgeTarget = getParityEdgeTargetIndex();
+    const formulas = readStoredJson(PARITY_FORMULA_STORAGE_KEY, {});
+    const fragment = document.createDocumentFragment();
+    getPieceChars('corner').forEach((label, index) => {
+        const selected = getParityCase(edgeTarget, index);
+        if (!selected) return;
+        const { row, textarea } = createFormulaRow(label, formulas[selected.key] || '', selected.reference || t('ph_algorithm'));
+        textarea.rows = 2;
+        textarea.addEventListener('input', () => saveParityFormula(selected.key, textarea.value));
+        fragment.appendChild(row);
+    });
+    container.replaceChildren(fragment);
 }
 
-function getSelectedParityCase() {
-    const getTarget = type => Number.parseInt(document.getElementById(`parity-${type}-target`).value, 10);
-    return getParityCase(getTarget('edge'), getTarget('corner'));
-}
-
-function renderParityCase() {
-    const selected = getSelectedParityCase();
-    const editor = document.getElementById('parity-formula');
-    const link = document.getElementById('parity-blddb-link');
-    editor.value = selected ? readStoredJson(PARITY_FORMULA_STORAGE_KEY, {})[selected.key] || '' : '';
-    editor.disabled = !selected;
-    if (selected) link.href = selected.url;
-    else link.removeAttribute('href');
-    document.getElementById('parity-reference').textContent = selected?.reference
-        ? t('parity_reference', { algorithm: selected.reference }) : t('parity_no_reference');
-}
-
-function saveParityFormula() {
-    const selected = getSelectedParityCase();
-    if (!selected) return;
+function saveParityFormula(key, value) {
     const dict = readStoredJson(PARITY_FORMULA_STORAGE_KEY, {});
-    const value = document.getElementById('parity-formula').value.trim();
-    if (value) dict[selected.key] = value;
-    else delete dict[selected.key];
+    const formula = value.trim();
+    if (formula) dict[key] = formula;
+    else delete dict[key];
     localStorage.setItem(PARITY_FORMULA_STORAGE_KEY, JSON.stringify(dict));
 }
 
@@ -1728,7 +1729,6 @@ function isFormulaListView(mode = currentListViewMode) {
 }
 
 function getCurrentListContentGroup(mode = currentListViewMode) {
-    if (mode === 'parity') return mode;
     return isFormulaListView(mode) ? 'formula' : 'word';
 }
 
@@ -1741,7 +1741,6 @@ function getCurrentListLayoutMode(mode = currentListViewMode) {
 }
 
 function buildListViewMode(layout = 'list', contentGroup = 'word') {
-    if (contentGroup === 'parity') return contentGroup;
     if (contentGroup === 'formula') {
         return layout === 'matrix' ? 'formula-matrix' : 'formula';
     }
@@ -1756,15 +1755,8 @@ function setListContentMode(contentGroup) {
     toggleViewMode(buildListViewMode(getCurrentListLayoutMode(), contentGroup));
 }
 
-function setAlgorithmType(type) {
-    currentAlgorithmType = type === 'edge' ? 'edge' : 'corner';
-    initUI();
-    toggleViewMode(currentListViewMode);
-}
-
 function renderCurrentListView() {
-    if (currentListViewMode === 'parity') renderParityEditor();
-    else if (isMatrixListView()) renderMatrix(getCurrentListContentMode());
+    if (isMatrixListView()) renderMatrix(getCurrentListContentMode());
     else if (getCurrentListContentGroup() === 'formula') renderFormulaList();
     else renderList();
 }
@@ -1850,11 +1842,6 @@ function updateTrainerTypeBadge() {
     const displayText = modeLabel;
     const badge = document.getElementById('trainer-type-badge');
     if (badge) badge.innerText = displayText;
-}
-
-function updateAlgorithmTypeButtons() {
-    setActionButtonActive(document.getElementById('btn-algorithm-type-corner'), currentAlgorithmType === 'corner');
-    setActionButtonActive(document.getElementById('btn-algorithm-type-edge'), currentAlgorithmType === 'edge');
 }
 
 function toggleMemoryContentMode(mode) {
@@ -3027,12 +3014,10 @@ function generateTrainerScramble(options = {}) {
 function toggleViewMode(mode) {
     currentListViewMode = mode;
     isMatrixMode = isMatrixListView(mode);
-    const isParity = mode === 'parity';
     const listBtn = document.getElementById('btn-mode-list');
     const matrixBtn = document.getElementById('btn-mode-matrix');
     const wordBtn = document.getElementById('btn-mode-content-word');
     const formulaBtn = document.getElementById('btn-mode-content-formula');
-    const parityBtn = document.getElementById('btn-mode-content-parity');
     const listControls = document.getElementById('list-mode-controls');
     const formulaHint = document.getElementById('formula-mode-hint');
     const matrixSettings = document.getElementById('matrix-settings');
@@ -3043,23 +3028,18 @@ function toggleViewMode(mode) {
     const container = document.getElementById('main-container');
     const currentLayout = getCurrentListLayoutMode(mode);
     const currentContentGroup = getCurrentListContentGroup(mode);
-    const showList = !isMatrixMode && !isParity;
+    const showList = !isMatrixMode;
     const showFormulas = showList && currentContentGroup === 'formula';
     document.getElementById('list-editor-toolbar')?.classList.toggle('hidden', !showList);
     document.getElementById('list-keyboard-hint')?.classList.toggle('hidden', !showList);
     document.getElementById('list-empty-state')?.classList.add('hidden');
-    document.getElementById('parity-area').classList.toggle('hidden', !isParity);
-    document.getElementById('list-piece-label').parentElement.classList.toggle('hidden', isParity);
-    document.getElementById('list-layout-label').parentElement.classList.toggle('hidden', isParity);
 
     setActionButtonActive(listBtn, currentLayout === 'list');
     setActionButtonActive(matrixBtn, currentLayout === 'matrix');
     setActionButtonActive(wordBtn, currentContentGroup === 'word');
     setActionButtonActive(formulaBtn, currentContentGroup === 'formula');
-    setActionButtonActive(parityBtn, isParity);
-    updateAlgorithmTypeButtons();
 
-    container.classList.toggle('wide-mode', isMatrixMode);
+    container.classList.toggle('wide-mode', isMatrixMode && (currentTab === 'corner' || currentTab === 'edge'));
     listControls.classList.toggle('hidden', !showList);
     formulaHint.classList.toggle('hidden', !showFormulas);
     matrixSettings.classList.toggle('hidden', !isMatrixMode);
@@ -3103,6 +3083,29 @@ function renderList() {
     finishListRender(container);
 }
 
+function createFormulaRow(code, value, placeholder, caseUrl) {
+    const row = document.createElement('div');
+    row.className = 'pair-item pair-item-formula';
+    const label = document.createElement(caseUrl ? 'a' : 'div');
+    label.className = 'pair-label';
+    label.textContent = code.toUpperCase();
+    if (caseUrl) {
+        label.href = caseUrl;
+        label.target = '_blank';
+        label.rel = 'noopener noreferrer';
+        label.title = t('blddb_pair_lookup', { pair: label.textContent });
+        label.setAttribute('aria-label', label.title);
+    }
+    const textarea = document.createElement('textarea');
+    textarea.className = 'pair-input formula-input';
+    textarea.rows = 3;
+    textarea.placeholder = placeholder;
+    textarea.value = value;
+    configurePairInput(textarea, code, true);
+    row.append(label, textarea);
+    return { row, textarea };
+}
+
 function renderFormulaList() {
     const chars = getPieceChars(currentAlgorithmType);
     const startChar = document.getElementById('char-select').value;
@@ -3116,35 +3119,14 @@ function renderFormulaList() {
         if (startChar === endChar) return;
         const pair = startChar + endChar;
         if (!isListEntryVisible(pair, formulaDict[pair])) return;
-        const div = document.createElement('div');
-        div.className = 'pair-item pair-item-formula';
-        const caseUrl = getBlddbCaseUrl(pair, contentMode);
-        const label = document.createElement(caseUrl ? 'a' : 'div');
-        label.className = 'pair-label';
-        label.textContent = pair.toUpperCase();
-        if (caseUrl) {
-            label.href = caseUrl;
-            label.target = '_blank';
-            label.rel = 'noopener noreferrer';
-            label.title = t('blddb_pair_lookup', { pair: label.textContent });
-            label.setAttribute('aria-label', label.title);
-        }
-        div.appendChild(label);
-
-        const textarea = document.createElement('textarea');
-        textarea.className = 'pair-input formula-input';
+        const { row, textarea } = createFormulaRow(
+            pair, formulaDict[pair] || '', getAlgorithmPlaceholder(pair, contentMode), getBlddbCaseUrl(pair, contentMode)
+        );
         textarea.dataset.pair = pair;
         textarea.dataset.store = contentMode;
-        textarea.rows = 3;
-        textarea.placeholder = getAlgorithmPlaceholder(pair, contentMode);
-        configurePairInput(textarea, pair, true);
-
         const stColor = getPairColor(pair, contentMode);
         if (stColor) textarea.classList.add(`status-${stColor}`);
-        textarea.value = formulaDict[pair] || "";
-
-        div.appendChild(textarea);
-        fragment.appendChild(div);
+        fragment.appendChild(row);
     });
 
     container.appendChild(fragment);
@@ -3536,7 +3518,8 @@ function triggerAction(tabId) {
 }
 
 function switchTab(tab) {
-    if (tab === currentTab) return;
+    if (tab === currentTab || !TAB_ORDER.includes(tab)) return;
+    const isPieceTab = tab === 'corner' || tab === 'edge';
 
     closeAllDropdowns();
     setTrainerClearMenuOpen(false);
@@ -3551,14 +3534,25 @@ function switchTab(tab) {
         if (isCurrent) button.setAttribute('aria-current', 'page');
         else button.removeAttribute('aria-current');
     });
-    const nextSection = document.getElementById(`view-${tab}`);
+    const nextSection = document.getElementById(isPieceTab ? 'view-list' : `view-${tab}`);
     nextSection.classList.add('active');
     void nextSection.offsetWidth;
     nextSection.classList.add(enterClass);
     const container = document.getElementById('main-container');
-    if (tab === 'list' && isMatrixListView()) container.classList.add('wide-mode'); else container.classList.remove('wide-mode');
     currentTab = tab;
-    if (tab === 'list') renderCurrentListView();
+    if (isPieceTab) {
+        if (currentAlgorithmType !== tab) {
+            currentAlgorithmType = tab;
+            initUI();
+        }
+        const heading = document.getElementById('piece-heading');
+        heading.dataset.i18n = tab === 'corner' ? 'algorithm_corners' : 'algorithm_edges';
+        heading.textContent = t(heading.dataset.i18n);
+        toggleViewMode(currentListViewMode);
+    } else {
+        container.classList.remove('wide-mode');
+    }
+    if (tab === 'parity') renderParityEditor();
     if (tab === 'memory') nextMemoryCard();
     if (tab === 'trainer') {
         generateTrainerScramble({ silent: true });
@@ -3807,6 +3801,7 @@ async function exportData() {
                     chars: getPieceChars(),
                     lettering: ensureLetteringState(),
                     lang: currentLang,
+                    parityEdgeTarget: getParityEdgeTargetIndex(),
                     algorithmBuffers: {
                         corner: getAlgorithmBufferIndex('corner'),
                         edge: getAlgorithmBufferIndex('edge')
@@ -3875,6 +3870,7 @@ function restoreBackup(backup) {
         [TRAINER_RECORDS_KEY]: backup.trainerRecords
     };
     if (backup.parityFormulaDict != null) data[PARITY_FORMULA_STORAGE_KEY] = backup.parityFormulaDict;
+    if (backup.parityEdgeTarget != null) data[PARITY_EDGE_TARGET_KEY] = backup.parityEdgeTarget;
     if (backup.lettering || backup.chars) {
         data[LETTERING_KEY] = backup.lettering;
         data[CHARS_KEY] = backup.lettering?.active.corner ?? backup.chars;
